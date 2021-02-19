@@ -57,13 +57,10 @@ It can be run with something like
 
 ## Usage
 
-Assuming the target system name is `gitea.local` ...  Once installed, Gitea will be available at `http://gitea.local:3000`.  Registration is OPEN by default, so register a user (will be a regular user).  After logging into gitea, open another tab to Drone at `http://gitea.local:3001`.  You should be redirected to Gitea to authorize access for Drone.o
+Assuming the target system name is `gitea.local` ...  Once installed, Gitea will be available at `http://gitea.local:3000`.  Registration is OPEN by default, so register a user (will be a regular user).  After logging into gitea, open another tab to Drone at `http://gitea.local:3001`.  You should be redirected to Gitea to authorize access for Drone.
 
-For adminstration of Gitea use the `gitea_drone_admin` and `gitea_drone_pass` values above to log in.  For cmdline access to Drone use the following (Note: have to create the env variables first so they can be updated from `drone/drone.env` (remember, from data dir `/stuff/gitea/drone/drone.env`)
+For adminstration of Gitea use the `gitea_drone_admin` and `gitea_drone_pass` values above to log in.  For cmdline access to Drone use the following (remember, from data dir `/stuff/gitea/drone/drone.env`)
 
-    export DRONE_TOKEN=
-    export DRONE_SERVER=
-    source <(sudo cat /drone/drone.env)
-
+    source /stuff/gitea/drone/drone_cmdline.env
     drone info
 
