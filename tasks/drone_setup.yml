@@ -1,0 +1,300 @@
+---
+
+#
+# See if there's an existing drone.env file, see if it has the RPC key
+# set in it.  Use that if it's there, otherwise generate another one.
+#
+- name: drone - Check for drone.env config file
+  stat:
+    path: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}'
+  register: drone_env
+
+- name: drone - Create RPC shared key and cmdline access token for Drone
+  set_fact:
+    drone_rpc_key: "{{ lookup('password', '/dev/null length=32 chars=hexdigits') }}"
+    drone_cmd_token: "{{ lookup('password', '/dev/null length=32 chars=hexdigits') }}"
+  when: not drone_env.stat.exists
+
+# If the drone.env file is there, ensure it has the right values
+- when: drone_env.stat.exists
+  block:
+  #
+    - name: drone - Fetch drone.env to check for RPC key
+      fetch:
+        src: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}'
+        dest: /tmp/
+        flat: true
+      changed_when: false
+
+    - name: drone - Get RPC key from drone.env
+      set_fact:
+        drone_check_rpc_key: "{{ lookup('ini', 'DRONE_RPC_SECRET type=properties file=/tmp/drone.env' ) }}"
+        drone_check_cmd_token: "{{ lookup('ini', 'DRONE_TOKEN type=properties file=/tmp/drone.env' ) }}"
+
+    # Must be 32 chars - can be generated with
+    #   openssl rand -hex 16
+    - name: drone - Create RPC shared key if no existing value
+      set_fact:
+        drone_rpc_key: "{{ lookup('password', '/dev/null length=32 chars=hexdigits') }}"
+      when: drone_check_rpc_key | length == 0
+
+    - name: drone - Set RPC shared key to existing value
+      set_fact:
+        drone_rpc_key: "{{ drone_check_rpc_key }}"
+      when: drone_check_rpc_key | length == 32
+
+    - name: drone - Create drone cmdline access token if no existing value
+      set_fact:
+        drone_cmd_token: "{{ lookup('password', '/dev/null length=32 chars=hexdigits') }}"
+      when: drone_check_cmd_token | length == 0
+
+    - name: drone - Set drone cmdline access token to existing value
+      set_fact:
+        drone_cmd_token: "{{ drone_check_cmd_token }}"
+      when: drone_check_cmd_token | length == 32
+  #
+  # block
+
+#
+# Now we have the drone RPC key
+#
+
+- name: drone - Copy drone config files
+  template:
+    src: "{{ item.src }}"
+    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ item.dest }}{% endif %}{% endfor %}'
+    owner: git
+    group: git
+    mode: "{{ item.mode }}"
+    force: "{{ item.force }}"
+  with_items:
+    - { src: drone_env.j2, dest: "{{ gitea_drone_env_file }}", mode: '0600', force: yes }
+    - { src: drone_cmdline_env.j2, dest: "{{ gitea_drone_cmdline_env_file }}", mode: '0644', force: yes }
+
+- name: drone - Install drone cmdline tool
+  unarchive:
+    src: "{{ gitea_drone_cmdline }}"
+    remote_src: yes
+    dest: /usr/local/bin/drone
+    creates: /usr/local/bin/drone
+    mode: 0755
+
+# Get list of users, see if main user is in list
+- name: Fetch list of current (if any) users in gitea
+  shell: docker exec -u git -it gitea /app/gitea/gitea admin user list | tail -n +3
+  register: gitea_users
+  changed_when: false
+
+- debug:
+    var=gitea_users
+
+##########################################################################
+#
+# If the drone user is NOT there, we create it, grab the token
+# save the token to gitea/admin.token
+# Then create the oauth2 application for drone
+#
+- when: gitea_drone_admin not in gitea_users.stdout
+  block:
+  #
+    # Gitea may still be initializing, resulting in "createUser: database is locked"
+    # This will try 3 times with 3secs between attempts
+    - name: new user - Create Drone admin user in gitea
+      shell: docker exec -u git -it gitea /app/gitea/gitea admin user create --username {{ gitea_drone_admin }} --password {{ gitea_drone_pass }} --email {{ default_mail_target }} --admin --access-token
+      register: gitea_create_admin
+      changed_when: false
+      retries: 5
+      delay: 5
+      until: gitea_create_admin.rc == 0
+
+    - debug:
+        var=gitea_create_admin
+
+      # a2021/02/15 18:58:47 ...dules/setting/git.go:101:newGit() [I] Git Version: 2.30.1, Wire Protocol Version 2 Enabled
+      # Access token was successfully created... 4b3824f3524cf105473c9c57b7756c1c2cbffcb7
+      # New user 'droneadmin' has been successfully created!
+      # Returns an array with one item, so use | first filter to get just string
+    - name: new user - Extract token from new user {{ gitea_drone_admin }}
+      set_fact:
+        gitea_admin_token: "{{ gitea_create_admin.stdout | regex_search('created\\.\\.\\. (.*)\\r', '\\1') | first }}"
+
+    #- name: new user - Save token in {{ gitea_admin_token_file }}
+    #  copy:
+    #    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
+    #    content: "GITEA_DRONE_TOKEN={{ gitea_admin_token }}"
+    #    mode: '0600'
+
+    - name: new user - Create droneadmin oauth2
+      uri:
+        url: "http://{{ inventory_hostname }}:{{ gitea_container_port }}/api/v1/user/applications/oauth2?token={{ gitea_admin_token }}"
+        method: POST
+        return_content: true
+        body_format: json
+        status_code: 201
+        body: '{ "name": "Drone", "redirect_uris": [ "http://{{ inventory_hostname }}:{{ gitea_drone_port }}/login" ] }'
+        headers:
+          accept: 'application/json'
+      register: gitea_create_oauth2
+
+    # content: |-
+    #   {"id":3,"name":"Drone","client_id":"118222af-ecc5-4819-ba79-8093d0cfe419","client_secret":"yiN9LmNjl-ZWGCO2ALKxjtHbLwJeXLfoSjwjLlDslYI=","redirect_uris":["http://test2.local:3080/login"],"created":"2021-02-16T14:41:53-05:00"}
+
+    - debug:
+        var=gitea_create_oauth2
+
+    # Returns an array with one item, so use | first filter to get just string
+    - name: new user - Capture new client_id and client_secret
+      set_fact:
+        gitea_client_id: "{{ gitea_create_oauth2.content | regex_search('client_id\":\"(.*)\",\"client_secret.*', '\\1') | first }}"
+        gitea_client_secret: "{{ gitea_create_oauth2.content | regex_search('client_secret\":\"(.*)\",\"redirect_uris.*', '\\1') | first }}"
+
+    - name: new user - Save token and oauth2 info in {{ gitea_admin_token_file }}
+      ini_file:
+        path: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
+        section: null
+        option: "{{ item.tag }}"
+        value: "{{ item.value }}"
+        no_extra_spaces: yes
+        mode: '0600'
+      with_items:
+        - { tag: GITEA_DRONE_TOKEN,         value: "{{ gitea_admin_token }}" }
+        - { tag: DRONE_GITEA_CLIENT_ID,     value: "{{ gitea_client_id }}" }
+        - { tag: DRONE_GITEA_CLIENT_SECRET, value: "{{ gitea_client_secret }}" }
+  #
+  # block
+
+
+##########################################################################
+#
+# If the drone user IS there, then make sure ...
+# - admin.tokens file exists
+# - admin.tokens has all 3 variables
+#
+- when: gitea_drone_admin in gitea_users.stdout
+  block:
+  #
+    - name: validate user - Check for admin token file {{ gitea_admin_token_file }}
+      stat:
+        path: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
+      register: gitea_admin_token_remote
+
+    # If we find an admin.tokens file, grab it for use in uri tasks below
+    - when: gitea_admin_token_remote.stat.exists
+      block:
+      #
+        - name: validate user - Fetch {{ gitea_admin_token_file }} if it exists
+          fetch:
+            src: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
+            dest: /tmp/
+            flat: true
+          changed_when: false
+
+        # TODO: Fix admin.tokens to use variable
+        - name: validate user - Grab admin tokens from {{ gitea_admin_token_file }}
+          set_fact:
+            gitea_admin_token: "{{ lookup('ini', 'GITEA_DRONE_TOKEN type=properties file=/tmp/admin.tokens') }}"
+            gitea_client_id: "{{ lookup('ini', 'DRONE_GITEA_CLIENT_ID type=properties file=/tmp/admin.tokens') }}"
+            gitea_client_secret: "{{ lookup('ini', 'DRONE_GITEA_CLIENT_SECRET type=properties file=/tmp/admin.tokens') }}"
+
+        - debug: msg="token {{ gitea_admin_token }} id {{ gitea_client_id }} len={{ gitea_client_id | length }} secret {{ gitea_client_secret }}"
+      #
+      # block
+
+    # Ensure we have admin token if admin user already in gitea
+    # - admin.tokens file must exist
+    # - 3 variables must exist
+    - name: validate user - Ensure we have the admin token if the admin user exists
+      assert:
+        that:
+          - gitea_admin_token_remote.stat.exists
+          - gitea_admin_token is defined
+          - gitea_client_id is defined
+          - gitea_client_secret is defined
+        fail_msg:
+          - "----------------------------------------------------------------------------------------------------"
+          - "| Since {{ gitea_drone_admin }} is a live user in gitea,"
+          - "| the tokens file must exist in {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}"
+          - "| with GITEA_DRONE_TOKEN, DRONE_GITEA_CLIENT_ID, DRONE_GITEA_CLIENT_SECRET defined"
+          - "----------------------------------------------------------------------------------------------------"
+  #
+  # block
+
+- when: (gitea_client_id is not defined or (gitea_client_id is defined and gitea_client_id | length == 0)) or
+        (gitea_client_secret is not defined or (gitea_client_secret is defined and gitea_client_secret | length == 0))
+  block:
+  #
+    # curl -X GET "http://test2.local:3000/api/v1/user/applications/oauth2?token=4b3824f3524cf105473c9c57b7756c1c2cbffcb7" -H  "accept: application/json"
+    - name: drone - Fetch list of oauth2 applications for {{ gitea_drone_admin }}
+      uri:
+        url: "http://{{ inventory_hostname }}:{{ gitea_container_port }}/api/v1/user/applications/oauth2?token={{ gitea_admin_token }}"
+        method: GET
+        return_content: true
+        status_code: 200
+        body_format: json
+        headers:
+          accept: 'application/json'
+      register: gitea_get_oauth2
+
+    - debug: msg="oath2 entries - {{ gitea_get_oauth2.json | length }}"
+    - debug:
+        var=gitea_get_oauth2
+    - debug: msg="{{ gitea_get_oauth2.json | json_query(jmesquery) }}"
+      vars:
+        jmesquery: "[*].{ID: id, Name: name, Client_ID: client_id, Client_Secret: client_secret, Redirect_URIs: redirect_uris}"
+
+    # When there are oauth2 entries, check for Drone
+    # If Drone exists, that would be bad
+    - when: gitea_get_oauth2.json | length > 0
+      block:
+      #
+        - name: drone - Grab any oauth2 entry named Drone
+          set_fact:
+            gitea_oauth2_drone: "{{ gitea_oauth2_drone | default({}) | combine( {item.name : item.client_id} ) }}"
+          with_items: "{{ gitea_get_oauth2.json | json_query('[? name==`Drone`]') }}"
+
+        - debug:
+            msg="gitea_oauth2_drone is {{ gitea_oauth2_drone }} len {{ gitea_oauth2_drone | length }}"
+          when: gitea_oauth2_drone is defined
+
+        - name: drone - Ensure that there are NO oauth2 entries named Drone
+          assert:
+            that: gitea_oauth2_drone is undefined
+            fail_msg:
+              - "----------------------------------------------------------------------------------------------------"
+              - "| Gitea user {{ gitea_drone_admin }} has an oauth2 entry named 'Drone' but we don't know"
+              - "| what the client_id or client_secret are"
+              - "----------------------------------------------------------------------------------------------------"
+      #
+      # block
+  #
+  # block
+
+- name: drone - Copy docker container systemd unit files
+  template:
+    src:  "{{ item.name }}.service.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.service"
+    mode: 0644
+  with_items:
+    - "{{ gitea_containers }}"
+  when: item.name != "gitea"
+
+# - name: drone - Enable avahi-alias publish systemd unit templates
+#   systemd:
+#     name: "avahi-alias@{{ item.name }}.service"
+#     enabled: yes
+#   with_items:
+#     - "{{ gitea_containers }}"
+#   when:
+#     - item.publish == true
+#     - item.name != "gitea"
+
+- name: Enable and start drone containers
+  systemd:
+    name: "{{ item.name }}.service"
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+  with_items:
+    - "{{ gitea_containers }}"
+  when: item.name != "gitea"
+

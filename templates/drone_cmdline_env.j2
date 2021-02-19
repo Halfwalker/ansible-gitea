@@ -1,0 +1,9 @@
+
+# Used for drone cmdline access
+export DRONE_TOKEN={{ drone_cmd_token }}
+export DRONE_SERVER=http://{{ inventory_hostname }}:{{ gitea_drone_port }}
+
+# Usage:
+# source {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_drone_cmdline_env_file }}{% endif %}{% endfor %}
+# drone info
+

@@ -1,0 +1,18 @@
+# https://serverfault.com/questions/268401/configure-zeroconf-to-broadcast-multiple-names
+# Enable publishing the name "test3.local" with
+#   sudo systemctl enable --now avahi-alias@test3.service
+# Disable publishing with
+#   sudo systemctl disable --now avahi-alias@test3.service
+
+[Unit]
+Description=Publish %I.local as alias for %H.local via mdns
+Requires=%i.service
+ConditionFileIsExecutable=/usr/bin/avahi-publish
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "/usr/bin/avahi-publish -a -R %i.local $(/sbin/ip ro sh | /bin/fgrep default | /usr/bin/mawk '{print $9}')"
+
+[Install]
+WantedBy=%i.service
+

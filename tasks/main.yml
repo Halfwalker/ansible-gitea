@@ -1,0 +1,50 @@
+---
+
+# jmespath info
+# https://www.middlewareinventory.com/blog/ansible_json_query/
+
+- name: Check for docker
+  stat:
+    path: /usr/bin/docker
+  register: installed_docker
+
+- name: Check for systemd-docker
+  stat:
+    path: /usr/local/bin/systemd-docker
+  register: installed_systemddocker
+
+- name: Validate that docker is installed
+  assert:
+    that:
+      - installed_docker.stat.exists
+    fail_msg:
+      - "----------------------------------------------------------------------------------------------------"
+      - "| docker must be installed - checked /usr/bin/docker, not there"
+      - "----------------------------------------------------------------------------------------------------"
+
+- become: yes
+  block:
+    #
+
+    # NOTE: We do NOT remove the gitea app.ini file, since if it exists it has
+    #       probably been updated by the admin and we would wipe those changes
+    #       out - things like the keys etc.
+    - name: Remove existing config files if force_update == true
+      file:
+        path: "{{ item }}"
+        state: absent
+      when: force_update
+      with_items:
+        - '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}'
+
+  #------------------------------------------------------------------------------
+    - name: setup - Set up gitea container and get it running
+      include_tasks: gitea_setup.yml
+  #------------------------------------------------------------------------------
+
+  #------------------------------------------------------------------------------
+    - name: setup - Install drone and drone-runner
+      include_tasks: drone_setup.yml
+      when: enable_drone
+  #------------------------------------------------------------------------------
+

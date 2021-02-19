@@ -1,0 +1,36 @@
+
+[Unit]
+Description=Drone CI/CD
+After=docker.service
+Requires=docker.service
+Wants=network-online.target docker.socket
+
+[Service]
+ TimeoutStartSec=infinity
+
+ExecStartPre=-/usr/bin/docker kill drone
+ExecStartPre=-/usr/bin/docker rm drone
+# ExecStartPre=/usr/bin/docker pull drone/drone:1
+
+ExecStart=/usr/bin/docker run --rm --name drone \
+    -e TZ=America/New_York \
+    --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}" \
+    --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}" \
+    -p {{ gitea_drone_port }}:80 \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+{% if item.volumes is defined %}{% for vol in item.volumes %}
+    -v {{ vol.host }}:{{ vol.cont }} \
+{% endfor %}{% endif %}
+    drone/drone:1
+
+ExecStop=/usr/bin/docker stop drone
+ExecStopPost=/usr/bin/docker rm -f drone
+ExecReload=/usr/bin/docker restart drone
+
+Restart=always
+RestartSec=20s
+Type=simple
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

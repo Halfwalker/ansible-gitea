@@ -1,0 +1,69 @@
+---
+
+# false -> if config file(s) exist do not replace them, just ensure that
+#          the correct lines/settings are inside
+# true  -> force new copies of config files into place and ensure correct
+#          correct lines/settings
+force_update: false
+
+# Shall we install drone and drone-runner as well ?
+enable_drone: true
+
+gitea_container_port: 3000
+gitea_drone_port: 3001
+gitea_dronerunner_port: 3002
+
+gitea_containers:
+  - name: gitea
+    # default port 3000
+    port: "{{ gitea_container_port }}"
+    publish: true
+    volumes:
+      - host: "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}"
+        cont: /data
+  - name: drone
+    port: "{{ gitea_drone_port }}"
+    publish: true
+    volumes:
+      - host: "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}/drone{% endif %}{% endfor %}"
+        cont: /data
+  - name: drone-runner
+    port: "{{ gitea_dronerunner_port }}"
+    publish: false
+
+gitea_datasets:
+  - name: gitea
+    mountpoint: /stuff/gitea
+    recordsize: 128K
+    owner: git
+    group: git
+    extra_dirs:
+      - /stuff/gitea/drone
+      - /stuff/gitea/gitea/conf
+
+username: "{{ vault_username | default(ansible_user_id) }}"
+
+# Main address to receive default emails for each of the servers.  Things like cron
+# job result emails etc. get sent to root@servername which aliases to this.
+# This is added as an entry to the aliases table on each node
+default_mail_target: "{{ vault_default_mail_target | default(username + '@' + inventory_hostname) }}"
+
+# This user is created as an admin user in gitea. We need this to get
+# oauth2 creds to populate the drone container creds. The user will be created
+# in gitea as an admin, so it can see all repos.
+gitea_drone_admin: "{{ vault_gitea_drone_admin | default('droneadmin') }}"
+gitea_drone_pass: "{{ vault_gitea_drone_pass | default('jeojEtMiar') }}"
+
+gitea_drone_cmdline: https://github.com/drone/drone-cli/releases/latest/download/drone_linux_amd64.tar.gz
+
+# Location of drone.env config file - inside gitea dataset
+# Used by drone container
+gitea_drone_env_file: /drone/drone.env
+
+# Location of drone_cmdline.env file - inside gitea dataset
+# Used by local user to set environment vars for drone cmdline tool
+gitea_drone_cmdline_env_file: /drone/drone_cmdline.env
+
+# Location of gitea admin ID access token - inside gitea dataset
+# Also holds client_id and client_secret for oauth2 access for droneadmin user
+gitea_admin_token_file: /gitea/admin.tokens

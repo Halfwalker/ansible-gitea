@@ -1,0 +1,41 @@
+
+[Unit]
+Description=gitea
+After=docker.service
+Requires=docker.service
+Wants=network-online.target docker.socket
+
+[Service]
+TimeoutStartSec=infinity
+
+{% if item.volumes is defined %}{% for vol in item.volumes %}
+ExecStartPre=/bin/mountpoint {{ vol.host }}
+{% endfor %}{% endif %}
+ExecStartPre=-/usr/bin/docker kill gitea
+ExecStartPre=-/usr/bin/docker rm gitea
+# ExecStartPre=/usr/bin/docker pull gitea/gitea:latest
+
+ExecStart=/usr/bin/docker run --rm --name gitea \
+    -e TZ=America/New_York \
+    -e USER_UID={{ getent_passwd['git'][1] }} \
+    -e USER_GID={{ getent_passwd['git'][2] }} \
+    -p {{ gitea_container_port }}:3000 \
+    -p 127.0.0.1:2222:22 \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /etc/timezone:/etc/timezone:ro \
+{% if item.volumes is defined %}{% for vol in item.volumes %}
+    -v {{ vol.host }}:{{ vol.cont }} \
+{% endfor %}{% endif %}
+    gitea/gitea:latest
+
+ExecStop=/usr/bin/docker stop gitea
+ExecStopPost=/usr/bin/docker rm -f gitea
+ExecReload=/usr/bin/docker restart gitea
+
+Restart=always
+RestartSec=20s
+Type=simple
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,139 @@
+---
+
+#
+# This contains all the prep tasks to get ready for gitea as a container
+# and then finally runs the container
+#
+
+# Set home dir to gitea dataset location under git (/stuff/gitea/git)
+- name: setup - Create git user for gitea container
+  user:
+    name: git
+    shell: /bin/bash
+    home: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}/git{% endif %}{% endfor %}'
+    comment: Git user for gitea container
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+  register: git_user
+
+- name: setup - Create extra dirs in ZFS datasets as required
+  file:
+    path: "{{ item.1 }}"
+    state: directory
+    owner: "{% if item.0.owner is defined %}{{ item.0.owner }}{% else %}{{ username }}{% endif %}"
+    group: "{% if item.0.group is defined %}{{ item.0.group }}{% else %}{{ username }}{% endif %}"
+  with_subelements:
+    - "{{ gitea_datasets }}"
+    - extra_dirs
+    - skip_missing: true
+
+# This info is used in the docker .service.j2 files to get UID and GID of main user
+- name: setup - Get uid/gid information for docker containers
+  getent:
+    database: passwd
+  check_mode: no
+
+- name: setup - Create git authorized_keys host entry for redirection into docker container
+  authorized_key:
+    user: git
+    state: present
+    key: "{{ git_user.ssh_public_key }}"
+    key_options: "no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty"
+
+- name: setup - Copy support files (owned by git)
+  copy:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: git
+    group: git
+  with_items:
+    - { src: gitea_environment, dest: "{{ git_user.home }}/.ssh/environment", mode: "u=rw,g=,o=" }
+
+# gitea REQUIRES /app/gitea/gitea to exist for ssh stuff to work in containers
+- name: setup - Create gitea support dir /app/gitea and local man1 dir
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - /app/gitea
+    - /usr/local/share/man/man1
+
+- name: setup - Copy support files
+  copy:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: gitea_local_ssh, dest: '/app/gitea/gitea', mode: 'u=rwx,g=rx,o=rx' }
+    - { src: avahi-alias@.service, dest: '/etc/systemd/system/avahi-alias@.service', mode: '0644' }
+
+- name: setup - Copy initial config app.ini
+  template:
+    src: "{{ item.src }}"
+    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ item.dest }}{% endif %}{% endfor %}'
+    owner: git
+    group: git
+    mode: "{{ item.mode }}"
+    force: "{{ item.force }}"
+  with_items:
+    - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: no }
+
+- name: setup - Copy docker container systemd unit files
+  template:
+    src:  "{{ item.name }}.service.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.service"
+    mode: 0644
+  with_items:
+    - "{{ gitea_containers }}"
+  register: gitea_container_systemd
+  when: item.name == "gitea"
+
+# - name: setup - Enable avahi-alias publish systemd unit templates
+#   systemd:
+#     name: "avahi-alias@{{ item.name }}.service"
+#     enabled: yes
+#   with_items:
+#     - "{{ gitea_containers }}"
+#   when:
+#     - item.publish == true
+#     - item.name == "gitea"
+
+# Start just the gitea container so we can do configuration on it
+- name: setup - Enable and start gitea
+  systemd:
+    name: "{{ item.name }}.service"
+    daemon_reload: yes
+    enabled: yes
+    state: started
+  with_items:
+    - "{{ gitea_containers }}"
+  register: gitea_start_container
+  when: item.name == "gitea"
+
+# If the systemd unit file changed, then we need to restart the container
+- name: setup - Enable and start gitea
+  systemd:
+    name: "{{ item.name }}.service"
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+  with_items:
+    - "{{ gitea_containers }}"
+  register: gitea_start_container
+  when:
+    - item.name == "gitea"
+    - gitea_container_systemd.changed
+    - not gitea_start_container.changed
+
+- name: setup - Wait for gitea container to start up
+  wait_for:
+    # port: "{% for container in gitea_containers %}{% if container.name == 'gitea' %}{% if container.port is defined %}{{ container.port }}{% else %}3000{% endif %}{% endif %}{% endfor %}"
+    port: "{{ gitea_container_port }}"
+    delay: 5
+  when: gitea_start_container.changed
+
