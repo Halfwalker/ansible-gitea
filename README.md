@@ -9,10 +9,27 @@ The `defaults/main.yml` file defines the variable `gitea_datasets` which define 
 ## Important files
 
 /drone/drone.env
-: Contains env variable to configure drone and drone-runner.  Also include the **DRONE_TOKEN** variable which holds the token needed for the `drone` cmdline too.
+: Contains env variable to configure drone and drone-runner.
+
+/drone/drone_cmdline.env
+: Contains the **DRONE_TOKEN** and **DRONE_SERVER** variables which hold the token and server location needed for the `drone` cmdline too.
 
 /gitea/admin.tokens
 : Contains the **client_id** and **client_secret** variables drone needs for access to gitea
+
+## Modifications to target system
+
+The role will install a `git` user on the target system to enable git access via ssh, with the home directory for `git` set as `/stuff/gitea/git`.  For `git push` over ssh to work and reach into the Gitea docker container a bit of ssh port redirection is needed.  A directory `/app/gitea` is created with a single shell script `/app/gitea/gitea` that contains
+
+    #!/bin/sh
+    ssh -p 2222 -o StrictHostKeyChecking=no git@127.0.0.1 "SSH_ORIGINAL_COMMAND=\"$SSH_ORIGINAL_COMMAND\" $0 $@"
+
+Every user that adds an ssh key to their profile gets an entry in the `git` user `/stuff/gitea/git/.ssh/authorized_keys` that looks similar to this
+
+    command="/app/gitea/gitea --config=/data/gitea/conf/app.ini serv key-1",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAwrspgQ2SqKe2EJEzv7O1G123fsut8mJxdJ3CSjOEBS9PnjHVUaugfV71xaDYspef7jQ7JzlDY.... rest of ssh pub key .....
+
+This redirects incoming ssh sessions for the `git` user to `localhost:2222`.  The docker container for Gitea is listening on localhost:2222 and that's how the connection gets in.  See the **SSH Container Passthrough** section in the [Installation with Docker](https://docs.gitea.io/en-us/install-with-docker/) section of the Gitea docs.
+
 
 ## Role Variables
 
