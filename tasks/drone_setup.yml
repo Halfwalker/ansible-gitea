@@ -75,7 +75,7 @@
   unarchive:
     src: "{{ gitea_drone_cmdline }}"
     remote_src: yes
-    dest: /usr/local/bin/drone
+    dest: /usr/local/bin
     creates: /usr/local/bin/drone
     mode: 0755
 
@@ -100,7 +100,7 @@
     # Gitea may still be initializing, resulting in "createUser: database is locked"
     # This will try 3 times with 3secs between attempts
     - name: new user - Create Drone admin user in gitea
-      shell: docker exec -u git -it gitea /app/gitea/gitea admin user create --username {{ gitea_drone_admin }} --password {{ gitea_drone_pass }} --email {{ default_mail_target }} --admin --access-token
+      shell: docker exec -u git -it gitea /app/gitea/gitea admin user create --username {{ gitea_drone_admin }} --password {{ gitea_drone_pass }} --email {{ default_mail_target }} --admin --must-change-password=false --access-token
       register: gitea_create_admin
       changed_when: false
       retries: 5
