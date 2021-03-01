@@ -1,0 +1,18 @@
+[Unit]
+Description=Drone Exec Runner
+After=drone.service
+ConditionFileIsExecutable=/usr/local/bin/drone-runner-exec
+
+[Service]
+StartLimitInterval=5
+StartLimitBurst=10
+ExecStart=/usr/local/bin/drone-runner-exec "service" "run" "--config" \
+    "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}"
+
+Restart=always
+RestartSec=120
+EnvironmentFile=-/etc/sysconfig/drone-runner-exec
+
+[Install]
+WantedBy=multi-user.target
+

@@ -54,7 +54,12 @@ default_mail_target: "{{ vault_default_mail_target | default(username + '@' + in
 gitea_drone_admin: "{{ vault_gitea_drone_admin | default('droneadmin') }}"
 gitea_drone_pass: "{{ vault_gitea_drone_pass | default('jeojEtMiar') }}"
 
-gitea_drone_cmdline: https://github.com/drone/drone-cli/releases/latest/download/drone_linux_amd64.tar.gz
+# Drone utilities, drone-cli and drone-runner-exec
+gitea_drone_utils:
+  - name: drone
+    url: https://github.com/drone/drone-cli/releases/latest/download/drone_linux_amd64.tar.gz
+  - name: drone-runner-exec
+    url: https://github.com/drone-runners/drone-runner-exec/releases/latest/download/drone_runner_exec_linux_amd64.tar.gz
 
 # Location of drone.env config file - inside gitea dataset
 # Used by drone container

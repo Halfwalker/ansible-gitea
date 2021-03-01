@@ -71,13 +71,14 @@
     - { src: drone_env.j2, dest: "{{ gitea_drone_env_file }}", mode: '0600', force: yes }
     - { src: drone_cmdline_env.j2, dest: "{{ gitea_drone_cmdline_env_file }}", mode: '0644', force: yes }
 
-- name: drone - Install drone cmdline tool
+- name: drone - Install drone utils
   unarchive:
-    src: "{{ gitea_drone_cmdline }}"
+    src: "{{ item.url }}"
     remote_src: yes
     dest: /usr/local/bin
-    creates: /usr/local/bin/drone
+    creates: "/usr/local/bin/{{ item.name }}"
     mode: 0755
+  with_items: "{{ gitea_drone_utils }}"
 
 # Get list of users, see if main user is in list
 - name: Fetch list of current (if any) users in gitea
@@ -276,6 +277,7 @@
     mode: 0644
   with_items:
     - "{{ gitea_containers }}"
+    - { name: drone-runner-exec }
   when: item.name != "gitea"
 
 # - name: drone - Enable avahi-alias publish systemd unit templates
@@ -296,5 +298,6 @@
     state: restarted
   with_items:
     - "{{ gitea_containers }}"
+    - { name: drone-runner-exec }
   when: item.name != "gitea"
 

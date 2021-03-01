@@ -9,6 +9,9 @@ DRONE_LOGS_PRETTY=true
 DRONE_LOGS_COLOR=true
 
 DRONE_RPC_SECRET={{ drone_rpc_key }}
+# These two for drone-runner and drone-runner--exec
+DRONE_RPC_PROTO=http
+DRONE_RPC_HOST={{ inventory_hostname }}:{{ gitea_drone_port }}
 
 DRONE_GITEA_SERVER=http://{{ inventory_hostname }}:{{ gitea_container_port }}
 

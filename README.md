@@ -1,6 +1,6 @@
 # Ansible role: gitea
 
-This role installs [Gitea](https://gitea.io) and optionally [Drone](https://drone.io) with a drone-runner as docker containers.
+This role installs [Gitea](https://gitea.io) and optionally [Drone](https://drone.io) with a drone-runner as docker containers.  It also installs the drone-runner-exec runner for jobs to be executed on the local gitea host outside of docker.
 
 ## Installation directories
 
@@ -9,7 +9,7 @@ The `defaults/main.yml` file defines the variable `gitea_datasets` which define 
 ## Important files
 
 /drone/drone.env
-: Contains env variable to configure drone and drone-runner.
+: Contains env variables to configure drone, drone-runner and drone-runner-exec.
 
 /drone/drone_cmdline.env
 : Contains the **DRONE_TOKEN** and **DRONE_SERVER** variables which hold the token and server location needed for the `drone` cmdline too.
@@ -19,7 +19,7 @@ The `defaults/main.yml` file defines the variable `gitea_datasets` which define 
 
 ## Modifications to target system
 
-The role will install a `git` user on the target system to enable git access via ssh, with the home directory for `git` set as `/stuff/gitea/git`.  For `git push` over ssh to work and reach into the Gitea docker container a bit of ssh port redirection is needed.  A directory `/app/gitea` is created with a single shell script `/app/gitea/gitea` that contains
+The role will create a `git` user on the target system to enable git access via ssh, with the home directory for `git` set as `/stuff/gitea/git`.  For `git push` over ssh to work and reach into the Gitea docker container a bit of ssh port redirection is needed.  A directory `/app/gitea` is created with a single shell script `/app/gitea/gitea` that contains
 
     #!/bin/sh
     ssh -p 2222 -o StrictHostKeyChecking=no git@127.0.0.1 "SSH_ORIGINAL_COMMAND=\"$SSH_ORIGINAL_COMMAND\" $0 $@"
