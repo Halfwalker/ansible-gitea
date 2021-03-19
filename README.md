@@ -17,6 +17,8 @@ The `defaults/main.yml` file defines the variable `gitea_datasets` which define 
 /gitea/admin.tokens
 : Contains the **client_id** and **client_secret** variables drone needs for access to gitea
 
+NOTE: drone pulls images defined in the .drone.yml with no authentication.  See [How to prevent DockerHub pull rate limit errors](https://discourse.drone.io/t/how-to-prevent-dockerhub-pull-rate-limit-errors/8324/1) for how to login
+
 ## Modifications to target system
 
 The role will create a `git` user on the target system to enable git access via ssh, with the home directory for `git` set as `/stuff/gitea/git`.  For `git push` over ssh to work and reach into the Gitea docker container a bit of ssh port redirection is needed.  A directory `/app/gitea` is created with a single shell script `/app/gitea/gitea` that contains
