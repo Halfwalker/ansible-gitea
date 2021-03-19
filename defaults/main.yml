@@ -9,9 +9,11 @@ force_update: false
 # Shall we install drone and drone-runner as well ?
 enable_drone: true
 
+# What ports each service listens on
 gitea_container_port: 3000
 gitea_drone_port: 3001
 gitea_dronerunner_port: 3002
+gitea_dronerunnerexec_port: 3003
 
 gitea_containers:
   - name: gitea
