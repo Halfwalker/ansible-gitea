@@ -10,7 +10,7 @@ Wants=network-online.target docker.socket
 
 ExecStartPre=-/usr/bin/docker kill drone
 ExecStartPre=-/usr/bin/docker rm drone
-# ExecStartPre=/usr/bin/docker pull drone/drone:1
+# ExecStartPre=/usr/bin/docker pull drone/drone:latest
 
 ExecStart=/usr/bin/docker run --rm --name drone \
     -e TZ=America/New_York \
@@ -21,7 +21,7 @@ ExecStart=/usr/bin/docker run --rm --name drone \
 {% if item.volumes is defined %}{% for vol in item.volumes %}
     -v {{ vol.host }}:{{ vol.cont }} \
 {% endfor %}{% endif %}
-    drone/drone:1
+    drone/drone:latest
 
 ExecStop=/usr/bin/docker stop drone
 ExecStopPost=/usr/bin/docker rm -f drone

@@ -11,7 +11,7 @@ Wants=network-online.target docker.socket
 
 ExecStartPre=-/usr/bin/docker kill drone-runner-docker
 ExecStartPre=-/usr/bin/docker rm drone-runner-docker
-# ExecStartPre=/usr/bin/docker pull drone/drone-runner-docker:1
+# ExecStartPre=/usr/bin/docker pull drone/drone-runner-docker:latest
 
 ExecStart=/usr/bin/docker run --rm --name drone-runner \
     -e TZ=America/New_York \
@@ -22,7 +22,7 @@ ExecStart=/usr/bin/docker run --rm --name drone-runner \
     -e DRONE_UI_PASSWORD=root \
     -p {{ gitea_dronerunner_port }}:3000 \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    drone/drone-runner-docker:1
+    drone/drone-runner-docker:latest
 
 ExecStop=/usr/bin/docker stop drone-runner
 ExecStopPost=/usr/bin/docker rm -f drone-runner
