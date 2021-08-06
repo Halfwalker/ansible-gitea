@@ -16,7 +16,7 @@ ExecStartPre=-/usr/bin/docker rm drone-runner-docker
 ExecStart=/usr/bin/docker run --rm --name drone-runner \
     -e TZ=America/New_York \
     --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}" \
-    -e DRONE_RUNNER_CAPACITY=2 \
+    -e DRONE_RUNNER_CAPACITY={{ gitea_dronerunner_capacity }} \
     -e DRONE_RUNNER_NAME=Runner1 \
     -e DRONE_UI_USERNAME=root \
     -e DRONE_UI_PASSWORD=root \

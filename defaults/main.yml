@@ -15,6 +15,10 @@ gitea_drone_port: 3001
 gitea_dronerunner_port: 3002
 gitea_dronerunnerexec_port: 3003
 
+# How many concurrent pipelines can this dronerunner host support ?
+# https://docs.drone.io/runner/ssh/configuration/reference/drone-runner-capacity/
+gitea_dronerunner_capacity: 4
+
 gitea_containers:
   - name: gitea
     # default port 3000
