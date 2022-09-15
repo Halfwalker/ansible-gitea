@@ -119,11 +119,11 @@
       set_fact:
         gitea_admin_token: "{{ gitea_create_admin.stdout | regex_search('created\\.\\.\\. (.*)\\r', '\\1') | first }}"
 
-    #- name: new user - Save token in {{ gitea_admin_token_file }}
-    #  copy:
-    #    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
-    #    content: "GITEA_DRONE_TOKEN={{ gitea_admin_token }}"
-    #    mode: '0600'
+    - name: new user - Save token in {{ gitea_admin_token_file }}
+      copy:
+        dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
+        content: "GITEA_DRONE_TOKEN={{ gitea_admin_token }}"
+        mode: '0600'
 
     - name: new user - Create droneadmin oauth2
       uri:
