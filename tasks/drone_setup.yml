@@ -135,7 +135,11 @@
         body: '{ "name": "Drone", "redirect_uris": [ "http://{{ inventory_hostname }}:{{ gitea_drone_port }}/login" ] }'
         headers:
           accept: 'application/json'
+          Content-Type: 'application/json'
       register: gitea_create_oauth2
+      until: gitea_create_oauth2.status == 201
+      retries: 5
+      delay: 5 # Every 5 seconds
 
     # content: |-
     #   {"id":3,"name":"Drone","client_id":"118222af-ecc5-4819-ba79-8093d0cfe419","client_secret":"yiN9LmNjl-ZWGCO2ALKxjtHbLwJeXLfoSjwjLlDslYI=","redirect_uris":["http://test2.local:3080/login"],"created":"2021-02-16T14:41:53-05:00"}
