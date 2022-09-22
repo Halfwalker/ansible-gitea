@@ -19,6 +19,13 @@ gitea_dronerunnerexec_port: 3003
 # https://docs.drone.io/runner/ssh/configuration/reference/drone-runner-capacity/
 gitea_dronerunner_capacity: 4
 
+gitea_support_packages:
+  common:
+    - git
+  jammy: []
+  focal: []
+  bionic: []
+
 gitea_containers:
   - name: gitea
     # default port 3000
