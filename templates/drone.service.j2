@@ -18,7 +18,9 @@ Wants=network-online.target docker.socket
 
 ExecStartPre=-/usr/bin/docker kill drone
 ExecStartPre=-/usr/bin/docker rm drone
-# ExecStartPre=/usr/bin/docker pull drone/drone:latest
+{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}
+ExecStartPre=/usr/bin/docker pull drone/drone:latest
+{% endif %}
 
 ExecStart=/usr/bin/docker run --rm --name drone{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif%} \
     -e TZ=America/New_York \

@@ -23,7 +23,12 @@ ExecStartPre=/bin/mountpoint {{ vol.host }}
 {% endif %}
 ExecStartPre=-/usr/bin/docker kill gitea
 ExecStartPre=-/usr/bin/docker rm gitea
-# ExecStartPre=/usr/bin/docker pull gitea/gitea:latest
+{#
+    Under molecule make sure we pull the gitea image
+#}
+{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}
+ExecStartPre=/usr/bin/docker pull gitea/gitea:latest
+{% endif %}
 
 {#
     If running under molecule there might be other instances
