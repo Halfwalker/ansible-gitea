@@ -165,7 +165,7 @@
   register: gitea_container_info
 
 - debug:
-    var=gitea_container_info.container.NetworkSettings
+    var=gitea_container_info
     # var=gitea_container_info.container.NetworkSettings.IPAddress
 
 # Since under molecule the container won't necessarily be on the same "host"
