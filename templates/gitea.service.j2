@@ -16,9 +16,11 @@ Wants=network-online.target docker.socket
 [Service]
 TimeoutStartSec=infinity
 
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
 {% if item.volumes is defined %}{% for vol in item.volumes %}
 ExecStartPre=/bin/mountpoint {{ vol.host }}
 {% endfor %}{% endif %}
+{% endif %}
 ExecStartPre=-/usr/bin/docker kill gitea
 ExecStartPre=-/usr/bin/docker rm gitea
 # ExecStartPre=/usr/bin/docker pull gitea/gitea:latest
