@@ -51,13 +51,13 @@ gitea_containers:
 
 gitea_datasets:
   - name: gitea
-    mountpoint: /stuff/gitea
+    mountpoint: "{% if lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') %}{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test{% else %}/stuff/gitea{% endif %}"
     recordsize: 128K
     owner: git
     group: git
     extra_dirs:
-      - /stuff/gitea/drone
-      - /stuff/gitea/gitea/conf
+      - "{% if lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') %}{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test{% else %}/stuff/gitea{% endif %}/drone"
+      - "{% if lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') %}{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test{% else %}/stuff/gitea{% endif %}/gitea/conf"
 
 username: "{{ vault_username | default(ansible_user_id) }}"
 
