@@ -1,0 +1,31 @@
+---
+
+- name: Prepare
+  hosts: all
+  gather_facts: true
+
+  tasks:
+
+    - name: Add testing user
+      user:
+        name: testing
+        comment: Test user for alacritty
+
+    # Need python3-docker for docker_container_info task
+    - name: Add molecule support packages
+      apt:
+        state: present
+        install_recommends: no
+        update_cache: yes
+        name:
+          - docker.io
+          - openssh-client
+          - python3-docker
+
+    - name: Create local directory for gitea files
+      local_action:
+        module: file
+        path: molecule_test
+        state: directory
+        mode: 0755
+

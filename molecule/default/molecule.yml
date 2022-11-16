@@ -1,0 +1,71 @@
+---
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+
+driver:
+  name: docker
+
+platforms:
+  - name: "${DRONE_REPO_NAME:-instance}-${MOLECULE_DISTRO:-ubuntu2204}"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2204}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${MOLECULE_PROJECT_DIRECTORY}:${MOLECULE_PROJECT_DIRECTORY}
+    privileged: true
+    pre_build_image: true
+    # network_mode: ${DRONE_DOCKER_NETWORK_ID}
+    # # networks:
+    # #   - name: ${DRONE_DOCKER_NETWORK_ID}
+    env:
+      # When running under drone, we use the docker-in-docker container
+      # This should be set in the .drone.yml file
+      # DOCKER_HOST: "tcp://dind:2375"
+      # When running molecule locally, the DOCKER_HOST var should be
+      # set to the local host socket unix:///var/run/docker.sock
+      DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+      MOLECULE_PROJECT_DIRECTORY: ${MOLECULE_PROJECT_DIRECTORY}
+
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        # Create a testing user in molecule/default/prepare.yml
+        username: testing
+        docker_host: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+  # options:
+  playbooks:
+    cleanup: cleanup.yml
+  env:
+    GH_USER: ${GH_USER:-""}
+    GH_TOKEN: ${GH_TOKEN:-""}
+    # Set this to let ansible know we're running under molecule
+    MOLECULE_SCENARIO_NAME: ${MOLECULE_SCENARIO_NAME:-default}
+    MOLECULE_PROJECT_DIRECTORY: ${MOLECULE_PROJECT_DIRECTORY}
+    # Default to pick up the role or playbook directly if not set by CI/CD
+    # ROLE_PATH: ${ROLE_PATH-"../.."}
+
+verifier:
+  name: goss
+
+scenario:
+  name: default
+  test_sequence:
+    - lint
+    - destroy
+    # - dependency
+    - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    - cleanup
+    - destroy
+

@@ -1,0 +1,92 @@
+# Molecule managed
+---
+
+# package:
+#   git:
+#     installed: true
+#     skip: false
+
+command:
+  version:
+    # required attributes
+    exit-status: 0
+    # defaults to hash key
+    # exec: /usr/bin/docker exec -u git gitea-ubuntu-{ { .Vars.container_suffix } } /app/gitea/gitea admin user list --admin
+    exec: /usr/bin/docker exec -u git {{ .Vars.gitea.name }} /app/gitea/gitea admin user list --admin
+    # optional attributes
+    stdout:
+    - droneadmin
+    stderr: []
+    timeout: 10000 # in milliseconds
+    skip: false
+
+#
+# NOTE: Hard-coded values here could be replaced by environment vars
+#       as in { { .Env.USERNAME } } where USERNAME is set in both
+#       .drone.yml and molecule/default/molecule.yml
+#
+# .drone.yml
+#   environment:
+#     USERNAME: testing
+#        or
+#     USERNAME:
+#       from_secret: special_secret_in_drone
+#
+# molecule/default/molecule.yml
+#   provisioner:
+#     env:
+#       USERNAME: ${USERNAME}
+#
+
+file:
+  /etc/systemd/system/gitea.service:
+    exists: true
+    filetype: file
+  /etc/systemd/system/drone.service:
+    exists: true
+    filetype: file
+  /etc/systemd/system/drone-runner.service:
+    exists: true
+    filetype: file
+  /etc/systemd/system/drone-runner-exec.service:
+    exists: true
+    filetype: file
+
+#
+# Want to check containers are listening on ports
+# When connecting directly to container IP address
+# gitea : 3000
+#   - Git with a cup of tea
+# drone : 80
+#   - <a href="/welcome"See Other</a>
+# drone-runner : 3000
+#   just check if open
+
+http:
+  http://{{ .Vars.gitea.ip }}:{{ .Vars.gitea_container_port }}:
+    # required attributes
+    status: 200
+    # optional attributes
+    body:
+      - "Git with a cup of tea"
+    no-follow-redirects: false # Setting this to true will NOT follow redirects
+    timeout: 1000
+    skip: false
+
+  http://{{ .Vars.drone.ip }}:{{ .Vars.gitea_drone_internal_port }}:
+    # required attributes
+    status: 200
+    # optional attributes
+    no-follow-redirects: false # Setting this to true will NOT follow redirects
+    timeout: 1000
+    skip: false
+
+  # Look for 401 unauthorized since we're not using the drone token
+  http://{{ .Vars.dronerunner.ip }}:{{ .Vars.gitea_dronerunner_internal_port }}:
+    # required attributes
+    status: 401
+    # optional attributes
+    no-follow-redirects: false # Setting this to true will NOT follow redirects
+    timeout: 1000
+    skip: false
+

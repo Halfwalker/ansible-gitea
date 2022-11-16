@@ -1,0 +1,41 @@
+---
+
+# Remove the gitea, drone and drone-runner containers
+# NOTE: these will named with the ubuntu version attached, like
+#       gitea-ubuntu-jammy, drone-ubuntu-focal etc.
+# https://github.com/shadow-robot/aurora/blob/master/ansible/playbooks/molecule_docker/molecule/hand_e_empty_machine_docker/cleanup.yml
+
+- name: Cleanup
+  hosts: all
+  gather_facts: true
+  become: yes
+
+  tasks:
+
+    - name: Stop gitea, drone and drone-runner containers
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: stopped
+        container_default_behavior: compatibility
+      ignore_errors: yes
+      loop:
+        - gitea-ubuntu-{{ ansible_distribution_release }}
+        - drone-ubuntu-{{ ansible_distribution_release }}
+        - drone-runner-ubuntu-{{ ansible_distribution_release }}
+
+    - name: Remove gitea, drone and drone-runner containers
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: absent
+        container_default_behavior: compatibility
+      ignore_errors: yes
+      loop:
+        - gitea-ubuntu-{{ ansible_distribution_release }}
+        - drone-ubuntu-{{ ansible_distribution_release }}
+        - drone-runner-ubuntu-{{ ansible_distribution_release }}
+
+    - name: Remove local role-created directories and files
+      local_action:
+        module: file
+        path: molecule_test
+        state: absent
