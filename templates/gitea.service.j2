@@ -38,9 +38,11 @@ ExecStart=/usr/bin/docker run --rm --name gitea{% if lookup('env', 'MOLECULE_SCE
     -p 127.0.0.1:2222:22 \
     -v /etc/localtime:/etc/localtime:ro \
     -v /etc/timezone:/etc/timezone:ro \
-{% if item.volumes is defined %}{% for vol in item.volumes %}
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}{% if item.volumes is defined %}{% for vol in item.volumes %}
     -v {{ vol.host }}:{{ vol.cont }} \
-{% endfor %}{% endif %}
+{% endfor %}{% endif %}{% else %}
+    -v {{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test:/data \
+{% endif %}
     gitea/gitea:latest
 
 ExecStop=/usr/bin/docker stop gitea

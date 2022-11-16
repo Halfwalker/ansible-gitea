@@ -22,13 +22,20 @@ ExecStartPre=-/usr/bin/docker rm drone
 
 ExecStart=/usr/bin/docker run --rm --name drone{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif%} \
     -e TZ=America/New_York \
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
     --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}" \
     --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}" \
+{% else %}
+    --env-file "{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test{{ gitea_drone_env_file }}" \
+    --env-file "{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test{{ gitea_admin_token_file }}" \
+{% endif %}
     -p {{ gitea_drone_port }}:80 \
     -v /var/run/docker.sock:/var/run/docker.sock \
-{% if item.volumes is defined %}{% for vol in item.volumes %}
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}{% if item.volumes is defined %}{% for vol in item.volumes %}
     -v {{ vol.host }}:{{ vol.cont }} \
-{% endfor %}{% endif %}
+{% endfor %}{% endif %}{% else %}
+    -v {{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test:/data \
+{% endif %}
     drone/drone:latest
 
 ExecStop=/usr/bin/docker stop drone
