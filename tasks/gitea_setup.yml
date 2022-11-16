@@ -165,7 +165,8 @@
   register: gitea_container_info
 
 - debug:
-    var=gitea_container_info.container.NetworkSettings.IPAddress
+    var=gitea_container_info.container.NetworkSettings
+    # var=gitea_container_info.container.NetworkSettings.IPAddress
 
 # Since under molecule the container won't necessarily be on the same "host"
 # we can't use a plain port check. We have to specify the host the container is
