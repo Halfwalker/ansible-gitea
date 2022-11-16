@@ -298,7 +298,7 @@
     name: "{{ item.name }}.service"
     daemon_reload: yes
     enabled: yes
-    state: restarted
+    state: started
   with_items:
     - "{{ gitea_containers }}"
     - { name: drone-runner-exec }
