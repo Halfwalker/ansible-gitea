@@ -1,6 +1,10 @@
 # ---> Ansible
 *.retry
 
+# Avoid molecule_test - used for local running molecule
+# Mapped to /data in gitea container
+molecule_test
+
 # ---> Vim
 # Swap
 [._]*.s[a-v][a-z]
