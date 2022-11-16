@@ -80,6 +80,12 @@
     - { src: gitea_local_ssh, dest: '/usr/local/bin/gitea', mode: 'u=rwx,g=rx,o=rx' }
     - { src: avahi-alias@.service, dest: '/etc/systemd/system/avahi-alias@.service', mode: '0644' }
 
+# If runnng under molecule, this may be local testing, in which cast /stuff/gitea may
+# already exist. For repeated runs under molecule, we should drop a fresh app.ini into place.
+# NOTE: Since app.ini is modified as we go, we do NOT want this task run/tested for idempotence
+#       The file will have been modified, so the copy here would be a changed task
+# If NOT under molecule, then we definitely do NOT want to overwrite the app.ini, since it
+# will have tokens etc. in it that we need to keep.
 - name: setup - Copy initial config app.ini
   template:
     src: "{{ item.src }}"
@@ -89,7 +95,8 @@
     mode: "{{ item.mode }}"
     force: "{{ item.force }}"
   with_items:
-    - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: no }
+    - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: "{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}yes{% else %}no{% endif %}" }
+  tags: molecule-idempotence-notest
 
 - name: setup - Copy docker container systemd unit files
   template:
