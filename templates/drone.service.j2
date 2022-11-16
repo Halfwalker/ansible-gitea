@@ -1,8 +1,16 @@
 
 [Unit]
 Description=Drone CI/CD
+{#
+    If running under molecule, then we're using the docker daemon
+    in the dind container, the one we're running in.  That means
+    that we installed docker.io, not docker-ce, and there IS NO
+    docker daemon locally, so these deps don't apply.
+#}
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
 After=docker.service
 Requires=docker.service
+{% endif %}
 Wants=network-online.target docker.socket
 
 [Service]
