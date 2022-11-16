@@ -147,10 +147,34 @@
     - not gitea_start_container.changed
   ignore_errors: true
 
+- name: What containers are running
+  shell: "docker ps -a"
+  become: yes
+  register: containers_running
+  tags: molecule-idempotence-notest
+
+- debug:
+    var=containers_running
+  tags: molecule-idempotence-notest
+
+- name: Get info on gitea container
+  community.general.docker_container_info:
+    name: "gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %}"
+  register: gitea_container_info
+
+- debug:
+    var=gitea_container_info.container.NetworkSettings.IPAddress
+
+# Since under molecule the container won't necessarily be on the same "host"
+# we can't use a plain port check. We have to specify the host the container is
+# running on - we get the IP for the container from the tasks just above.  Then
+# the host value is just the IP address of the gitea container.
 - name: setup - Wait for gitea container to start up
   wait_for:
+    host: "{{ gitea_container_info.container.NetworkSettings.IPAddress }}"
     # port: "{% for container in gitea_containers %}{% if container.name == 'gitea' %}{% if container.port is defined %}{{ container.port }}{% else %}3000{% endif %}{% endif %}{% endfor %}"
     port: "{{ gitea_container_port }}"
     delay: 5
-  when: gitea_start_container.changed
+  when: gitea_start_container.changed or gitea_start_container.changed2
+  tags: molecule-idempotence-notest
 
