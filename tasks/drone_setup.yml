@@ -149,8 +149,8 @@
     # Returns an array with one item, so use | first filter to get just string
     - name: new user - Capture new client_id and client_secret
       set_fact:
-        gitea_client_id: "{{ gitea_create_oauth2.content | regex_search('client_id\":\"(.*)\",\"client_secret.*', '\\1') | first }}"
-        gitea_client_secret: "{{ gitea_create_oauth2.content | regex_search('client_secret\":\"(.*)\",\"redirect_uris.*', '\\1') | first }}"
+        gitea_client_id: "{{ gitea_create_oauth2.content | regex_search('client_id\":\"(.*)\",.*\"client_secret.*', '\\1') | first }}"
+        gitea_client_secret: "{{ gitea_create_oauth2.content | regex_search('client_secret\":\"(.*)\",.*\"redirect_uris.*', '\\1') | first }}"
 
     - name: new user - Save token and oauth2 info in {{ gitea_admin_token_file }}
       ini_file:
