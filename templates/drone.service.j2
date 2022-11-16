@@ -12,7 +12,7 @@ ExecStartPre=-/usr/bin/docker kill drone
 ExecStartPre=-/usr/bin/docker rm drone
 # ExecStartPre=/usr/bin/docker pull drone/drone:latest
 
-ExecStart=/usr/bin/docker run --rm --name drone \
+ExecStart=/usr/bin/docker run --rm --name drone{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif%} \
     -e TZ=America/New_York \
     --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}" \
     --env-file "{% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}" \

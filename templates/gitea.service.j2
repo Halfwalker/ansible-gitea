@@ -25,7 +25,12 @@ ExecStartPre=-/usr/bin/docker kill gitea
 ExecStartPre=-/usr/bin/docker rm gitea
 # ExecStartPre=/usr/bin/docker pull gitea/gitea:latest
 
-ExecStart=/usr/bin/docker run --rm --name gitea \
+{#
+    If running under molecule there might be other instances
+    running as well.  So we need a unique name for the gitea
+    container.
+#}
+ExecStart=/usr/bin/docker run --rm --name gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} \
     -e TZ=America/New_York \
     -e USER_UID={{ getent_passwd['git'][1] }} \
     -e USER_GID={{ getent_passwd['git'][2] }} \
