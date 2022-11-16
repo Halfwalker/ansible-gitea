@@ -49,6 +49,7 @@ provisioner:
     MOLECULE_PROJECT_DIRECTORY: ${MOLECULE_PROJECT_DIRECTORY}
     # Default to pick up the role or playbook directly if not set by CI/CD
     # ROLE_PATH: ${ROLE_PATH-"../.."}
+    DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
 
 verifier:
   name: goss
