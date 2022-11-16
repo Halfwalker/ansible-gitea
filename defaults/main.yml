@@ -10,9 +10,14 @@ force_update: false
 enable_drone: true
 
 # What ports each service listens on
+# The _internal_ ports are what the service listens on inside its container
+# These are needed for molecule testing to verify the ports are open, and should
+# not be changed unless the underlying container config changes
 gitea_container_port: 3000
 gitea_drone_port: 3001
+gitea_drone_internal_port: 80
 gitea_dronerunner_port: 3002
+gitea_dronerunner_internal_port: 3000
 gitea_dronerunnerexec_port: 3003
 
 # How many concurrent pipelines can this dronerunner host support ?
