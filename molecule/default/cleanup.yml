@@ -17,7 +17,7 @@
         name: "{{ item }}"
         state: stopped
         container_default_behavior: compatibility
-      ignore_errors: yes
+      failed_when: false
       loop:
         - gitea-ubuntu-{{ ansible_distribution_release }}
         - drone-ubuntu-{{ ansible_distribution_release }}
@@ -28,14 +28,14 @@
         name: "{{ item }}"
         state: absent
         container_default_behavior: compatibility
-      ignore_errors: yes
+      failed_when: false
       loop:
         - gitea-ubuntu-{{ ansible_distribution_release }}
         - drone-ubuntu-{{ ansible_distribution_release }}
         - drone-runner-ubuntu-{{ ansible_distribution_release }}
 
     - name: Remove local role-created directories and files
-      local_action:
-        module: file
+      file:
         path: molecule_test
         state: absent
+      delegate_to: localhost
