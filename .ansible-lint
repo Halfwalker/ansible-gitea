@@ -6,3 +6,4 @@ skip_list:
   - command-instead-of-module
   - unnamed-task
   - git-latest
+  - no-handler

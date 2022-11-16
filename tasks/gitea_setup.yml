@@ -30,6 +30,7 @@
     state: directory
     owner: "{% if item.0.owner is defined %}{{ item.0.owner }}{% else %}{{ username }}{% endif %}"
     group: "{% if item.0.group is defined %}{{ item.0.group }}{% else %}{{ username }}{% endif %}"
+    mode: '0755'
   with_subelements:
     - "{{ gitea_datasets }}"
     - extra_dirs
@@ -148,9 +149,10 @@
   ignore_errors: true
 
 - name: What containers are running
-  shell: "docker ps -a"
+  command: "docker ps -a"
   become: yes
   register: containers_running
+  changed_when: false
   tags: molecule-idempotence-notest
 
 - debug:
