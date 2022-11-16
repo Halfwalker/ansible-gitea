@@ -21,14 +21,14 @@ NOTE: drone pulls images defined in the .drone.yml with no authentication.  See 
 
 ## Modifications to target system
 
-The role will create a `git` user on the target system to enable git access via ssh, with the home directory for `git` set as `/stuff/gitea/git`.  For `git push` over ssh to work and reach into the Gitea docker container a bit of ssh port redirection is needed.  A directory `/app/gitea` is created with a single shell script `/app/gitea/gitea` that contains
+The role will create a `git` user on the target system to enable git access via ssh, with the home directory for `git` set as `/stuff/gitea/git`.  For `git push` over ssh to work and reach into the Gitea docker container a bit of ssh port redirection is needed.  An ssh redirection shell script `/usr/local/bin/gitea` that contains
 
     #!/bin/sh
     ssh -p 2222 -o StrictHostKeyChecking=no git@127.0.0.1 "SSH_ORIGINAL_COMMAND=\"$SSH_ORIGINAL_COMMAND\" $0 $@"
 
 Every user that adds an ssh key to their profile gets an entry in the `git` user `/stuff/gitea/git/.ssh/authorized_keys` that looks similar to this
 
-    command="/app/gitea/gitea --config=/data/gitea/conf/app.ini serv key-1",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAwrspgQ2SqKe2EJEzv7O1G123fsut8mJxdJ3CSjOEBS9PnjHVUaugfV71xaDYspef7jQ7JzlDY.... rest of ssh pub key .....
+    command="/usr/local/bin/gitea --config=/data/gitea/conf/app.ini serv key-1",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAwrspgQ2SqKe2EJEzv7O1G123fsut8mJxdJ3CSjOEBS9PnjHVUaugfV71xaDYspef7jQ7JzlDY.... rest of ssh pub key .....
 
 This redirects incoming ssh sessions for the `git` user to `localhost:2222`.  The docker container for Gitea is listening on localhost:2222 and that's how the connection gets in.  See the **SSH Container Passthrough** section in the [Installation with Docker](https://docs.gitea.io/en-us/install-with-docker/) section of the Gitea docs.
 
@@ -53,9 +53,14 @@ Whether or not to install drone and drone-runner containers for CI/CD
 
 Defines what port each container will listen on
 
+    gitea_drone_internal_port: 80
+    gitea_dronerunner_internal_port: 3000
+
+These are the ports that drone and drone-runner listen on internally - these vars are used by the molecule testing _molecule/default/tests/test_default.yml_ goss file to verify that the containers are running.
+
     username: "{{ vault_username | default(ansible_user_id) }}"
 
-Used for file ownership and first admin user in Gitea (see `gitea_drone_admin` below)
+Used for file ownership and first admin user in Gitea (see `gitea_drone_admin` below)  Will be pulled from vault if available.
 
     gitea_drone_admin: droneadmin
     gitea_drone_pass: <some password>
@@ -83,3 +88,16 @@ For adminstration of Gitea use the `gitea_drone_admin` and `gitea_drone_pass` va
     source /stuff/gitea/drone/drone_cmdline.env
     drone info
 
+## Molecule testing
+
+Pick the ubuntu version to test under (ubuntu2204, ubuntu2004).  Molecule can be run locally if installed, or via a toolset container.  The container method is slightly more complex (see cmdline below) but does not require anything on the local system other than docker.
+
+*NOTE:* The environment variable DOCKER_HOST must set to the local `/var/run/docker.sock` - that way docker commands will use the volume-mounted `/var/run/docker.sock` to access the current local host docker daemon.
+
+    docker run --rm -it -e MOLECULE_DISTRO=ubuntu2204 -e DOCKER_HOST=unix:///var/run/docker.sock -v "$(pwd)":"${PWD}" -w "${PWD}" -v /var/run/docker.sock:/var/run/docker.sock quay.io/halfwalker/toolset molecule test
+
+The _molecule/default/prepare.yml_ will create a temp directory _molecule/default/molecule_test_  to act as a directory to store the usual gitea and drone data.  Running molecule as above will create a docker container named *instance-ubuntu2204* to run the role against.  Being local testing, it will use the local docker daemon for when the gitea, drone and drone-runner containers are created.  Those containers and the _molecule_test_ directly will all be removed by _molecule/default/cleanup.yml_ when the testing run completes.
+
+## TODO
+
+Set up a way to use the docker-in-docker (dind) container for all the molecule testing.  This would remove any touching of the local system during a molecule testing run.
