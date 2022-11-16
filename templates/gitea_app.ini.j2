@@ -28,8 +28,12 @@ DISABLE_SSH      = false
 SSH_PORT         = 22
 SSH_LISTEN_PORT  = 22
 LFS_START_SERVER = true
-LFS_CONTENT_PATH = /data/gitea/lfs
 OFFLINE_MODE     = false
+
+# Per docs, location is defined here
+# https://docs.gitea.io/en-us/git-lfs-setup/
+[lfs]
+PATH             = /data/gitea/lfs
 
 [database]
 PATH    = /data/gitea/gitea.db
