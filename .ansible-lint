@@ -1,0 +1,8 @@
+# .ansible-lint
+
+skip_list:
+  - 208
+  - 301
+  - command-instead-of-module
+  - unnamed-task
+  - git-latest
