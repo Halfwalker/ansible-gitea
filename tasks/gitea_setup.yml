@@ -129,6 +129,7 @@
     - "{{ gitea_containers }}"
   register: gitea_start_container
   when: item.name == "gitea"
+  ignore_errors: true
 
 # If the systemd unit file changed, then we need to restart the container
 - name: setup - Enable and start gitea
@@ -139,11 +140,12 @@
     state: restarted
   with_items:
     - "{{ gitea_containers }}"
-  register: gitea_start_container
+  register: gitea_start_container2
   when:
     - item.name == "gitea"
     - gitea_container_systemd.changed
     - not gitea_start_container.changed
+  ignore_errors: true
 
 - name: setup - Wait for gitea container to start up
   wait_for:
