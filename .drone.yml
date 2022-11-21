@@ -72,6 +72,8 @@ services:
       - dockerd --tls=false --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock -p 0.0.0.0:2375:2375/tcp
     environment:
       DOCKER_TLS_CERTDIR:
+    networks:
+      - name: $DRONE_DOCKER_NETWORK_ID
     # volumes:
     #   - name: dockersock
     #     path: /var/run
@@ -149,6 +151,8 @@ services:
       - dockerd --tls=false --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock -p 0.0.0.0:2375:2375/tcp
     environment:
       DOCKER_TLS_CERTDIR:
+    networks:
+      - name: $DRONE_DOCKER_NETWORK_ID
     # volumes:
     #   - name: dockersock
     #     path: /var/run
