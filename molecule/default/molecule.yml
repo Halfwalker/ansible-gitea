@@ -18,9 +18,9 @@ platforms:
       - ${MOLECULE_PROJECT_DIRECTORY}:${MOLECULE_PROJECT_DIRECTORY}
     privileged: true
     pre_build_image: true
-    # network_mode: ${DRONE_DOCKER_NETWORK_ID}
-    # # networks:
-    # #   - name: ${DRONE_DOCKER_NETWORK_ID}
+    # network_mode ensures that the test instance is on the same docker network
+    # as the toolset container as well as the mailhog container
+    network_mode: ${DRONE_DOCKER_NETWORK_ID}
     env:
       # When running under drone, we use the docker-in-docker container
       # This should be set in the .drone.yml file
