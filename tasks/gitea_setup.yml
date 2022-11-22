@@ -43,7 +43,7 @@
   check_mode: no
 
 - name: setup - Create git authorized_keys host entry for redirection into docker container
-  authorized_key:
+  ansible.posix.authorized_key:
     user: git
     state: present
     key: "{{ git_user.ssh_public_key }}"
