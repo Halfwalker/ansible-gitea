@@ -100,6 +100,7 @@
 # If the drone user is NOT there, we create it, grab the token
 # save the token to gitea/admin.token
 # Then create the oauth2 application for drone
+# NOTE: the oauth2 application must be a confidential_client: true
 #
 - when: gitea_drone_admin not in gitea_users.stdout
   block:
@@ -138,7 +139,7 @@
         return_content: true
         body_format: json
         status_code: 201
-        body: '{ "name": "Drone", "redirect_uris": [ "http://{{ inventory_hostname }}:{{ gitea_drone_port }}/login" ] }'
+        body: '{ "name": "Drone", "confidential_client": true, "redirect_uris": [ "http://{{ inventory_hostname }}:{{ gitea_drone_port }}/login" ] }'
         headers:
           accept: 'application/json'
           Content-Type: 'application/json'
