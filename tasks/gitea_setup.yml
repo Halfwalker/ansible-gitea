@@ -179,6 +179,6 @@
     # port: "{% for container in gitea_containers %}{% if container.name == 'gitea' %}{% if container.port is defined %}{{ container.port }}{% else %}3000{% endif %}{% endif %}{% endfor %}"
     port: "{{ gitea_container_port }}"
     delay: 5
-  when: gitea_start_container.changed or gitea_start_container.changed2
+  when: gitea_start_container.changed {% if gitea_start_container2 is defined %}or gitea_start_container2.changed{% endif %}
   tags: molecule-idempotence-notest
 
