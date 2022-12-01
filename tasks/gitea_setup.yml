@@ -10,7 +10,7 @@
     state: present
     install_recommends: no
     update_cache: yes
-    name: "{{ gitea_support_packages.common }} + {{ gitea_support_packages[ansible_distribution_release] }}"
+    name: "{{ gitea_support_packages.common + gitea_support_packages[ansible_distribution_release] }}"
 
 # Set home dir to gitea dataset location under git (/stuff/gitea/git)
 - name: setup - Create git user for gitea container
