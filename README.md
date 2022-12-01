@@ -100,4 +100,5 @@ The _molecule/default/prepare.yml_ will create a temp directory _molecule/defaul
 
 ## TODO
 
-Set up a way to use the docker-in-docker (dind) container for all the molecule testing.  This would remove any touching of the local system during a molecule testing run.
+- Set up a way to use the docker-in-docker (dind) container for all the molecule testing.  This would remove any touching of the local system during a molecule testing run.
+- Get proper multi-user Drone working.  See https://discourse.drone.io/t/drone-clis-token-option-does-not-work/6871

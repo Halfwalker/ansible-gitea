@@ -20,5 +20,4 @@ DRONE_SERVER_HOST={{ inventory_hostname }}:{{ gitea_drone_port }}
 
 DRONE_USER_CREATE=username:{{ gitea_drone_admin }},admin:true,token:{{ drone_cmd_token }}
 # Can also specify token by adding ",token:<32-char-token>"
-
 DRONE_TOKEN={{ drone_cmd_token }}

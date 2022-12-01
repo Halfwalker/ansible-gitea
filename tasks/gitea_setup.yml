@@ -104,12 +104,12 @@
         - "INTERNAL_TOKEN"
         - "SECRET_KEY"
         - "JWT_SECRET"
-    
+
     - name: Remove the secrets container
       community.docker.docker_container:
         name: gitea_secrets
         state: absent
-    
+
 # Create a secrets dict - used in templates/gitea_app.ini.j2
     #   gitea_app_secrets:
     #     INTERNAL_TOKEN: secret string
@@ -119,7 +119,7 @@
       set_fact:
         gitea_app_secrets: "{{ gitea_app_secrets | default({}) | combine( { item.item: item.container.Output } ) }}"
       loop: "{{ gitea_secrets.results }}"
-    
+
     # If runnng under molecule, this may be local testing, in which cast /stuff/gitea may
     # already exist on the local machine. For repeated runs under molecule, we should drop a fresh app.ini into place.
     # NOTE: Since app.ini is modified as we go, we do NOT want this task run/tested for idempotence
