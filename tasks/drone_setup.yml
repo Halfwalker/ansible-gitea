@@ -29,8 +29,8 @@
     # This will always cause an ansible-lint warning, can't find the /tmp/drone.env file
     - name: drone - Get RPC key from drone.env
       set_fact:
-        drone_check_rpc_key: "{{ lookup('ini', 'DRONE_RPC_SECRET type=properties file=/tmp/drone.env' ) }}"
-        drone_check_cmd_token: "{{ lookup('ini', 'DRONE_TOKEN type=properties file=/tmp/drone.env' ) }}"
+        drone_check_rpc_key: "{{ lookup('ini', 'DRONE_RPC_SECRET type=properties file=/tmp/drone.env') }}"
+        drone_check_cmd_token: "{{ lookup('ini', 'DRONE_TOKEN type=properties file=/tmp/drone.env') }}"
 
     # Must be 32 chars - can be generated with
     #   openssl rand -hex 16
@@ -194,7 +194,7 @@
     - when: gitea_admin_token_remote.stat.exists
       block:
       #
-        - name: validate user - Fetch {{ gitea_admin_token_file }} if it exists
+        - name: validate user - If it exists fetch {{ gitea_admin_token_file }}
           fetch:
             src: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
             dest: /tmp/
@@ -261,7 +261,7 @@
       #
         - name: drone - Grab any oauth2 entry named Drone
           set_fact:
-            gitea_oauth2_drone: "{{ gitea_oauth2_drone | default({}) | combine( {item.name : item.client_id} ) }}"
+            gitea_oauth2_drone: "{{ gitea_oauth2_drone | default({}) | combine({item.name: item.client_id}) }}"
           with_items: "{{ gitea_get_oauth2.json | json_query('[? name==`Drone`]') }}"
 
         - debug:

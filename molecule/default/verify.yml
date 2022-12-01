@@ -26,7 +26,7 @@
         validate_certs: false
         user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
         password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
-        force_basic_auth: "{% if lookup('env', 'GH_USER') %}yes{% else %}no{% endif%}"
+        force_basic_auth: "{% if lookup('env', 'GH_USER') %}yes{% else %}no{% endif %}"
       register: _latest_release
       until: _latest_release.status == 200
       retries: 5
@@ -36,7 +36,7 @@
         goss_version: "{{ _latest_release.json.tag_name[1:] }}"
       when: _latest_release is defined
 
-    - name: debug
+    - name: Debug
       debug:
         var=goss_version
 
@@ -73,7 +73,7 @@
       changed_when: false
       become: false
 
-    - name: debug
+    - name: Debug
       debug:
         msg: "{{ test_files.files }}"
         verbosity: 3
@@ -141,7 +141,7 @@
 
     - name: Create fact
       set_fact:
-        container_fact: "{{ container_fact | default([]) + [ container_template ] }}"
+        container_fact: "{{ container_fact | default([]) + [container_template] }}"
       vars:
         ip_addresses: "results[?invocation.module_args.name == `{{ item }}-ubuntu-{{ ansible_distribution_release }}`].container.NetworkSettings.IPAddress"
         container_template:
@@ -161,7 +161,7 @@
     #
     - name: Create dict
       set_fact:
-        container_dict: "{{ container_dict | default({}) | combine( { item | regex_replace('-'): { container.c_name: container.name, container.c_ip: container.ip } } ) }}"
+        container_dict: "{{ container_dict | default({}) | combine({item | regex_replace('-'): {container.c_name: container.name, container.c_ip: container.ip}}) }}"
       vars:
         ip_addresses: "results[?invocation.module_args.name == `{{ item }}-ubuntu-{{ ansible_distribution_release }}`].container.NetworkSettings.IPAddress"
         container:

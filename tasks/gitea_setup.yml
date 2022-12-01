@@ -117,7 +117,7 @@
     #     SECRET_KEY: secret string
     - name: Create gitea_app_secrets
       set_fact:
-        gitea_app_secrets: "{{ gitea_app_secrets | default({}) | combine( { item.item: item.container.Output } ) }}"
+        gitea_app_secrets: "{{ gitea_app_secrets | default({}) | combine({item.item: item.container.Output}) }}"
       loop: "{{ gitea_secrets.results }}"
 
     # If runnng under molecule, this may be local testing, in which cast /stuff/gitea may
