@@ -71,6 +71,8 @@ ROOT_PATH = /data/gitea/log
 
 [security]
 INSTALL_LOCK   = true
+INTERNAL_TOKEN = {{ gitea_app_secrets.INTERNAL_TOKEN }}
+SECRET_KEY     = {{ gitea_app_secrets.SECRET_KEY }}
 
 [service]
 DISABLE_REGISTRATION = false
@@ -85,6 +87,7 @@ DEFAULT_ENABLE_TIMETRACKING       = false
 NO_REPLY_ADDRESS                  = 
 
 [oauth2]
+JWT_SECRET = {{ gitea_app_secrets.JWT_SECRET }}
 
 [mailer]
 ENABLED = false

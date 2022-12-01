@@ -91,3 +91,6 @@ gitea_drone_cmdline_env_file: /drone/drone_cmdline.env
 # Location of gitea admin ID access token - inside gitea dataset
 # Also holds client_id and client_secret for oauth2 access for droneadmin user
 gitea_admin_token_file: /gitea/admin.tokens
+
+# Location of main config file app.ini
+gitea_app_ini_file: /gitea/conf/app.ini

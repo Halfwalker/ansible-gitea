@@ -81,23 +81,64 @@
     - { src: gitea_local_ssh, dest: '/usr/local/bin/gitea', mode: 'u=rwx,g=rx,o=rx' }
     - { src: avahi-alias@.service, dest: '/etc/systemd/system/avahi-alias@.service', mode: '0644' }
 
-# If runnng under molecule, this may be local testing, in which cast /stuff/gitea may
-# already exist. For repeated runs under molecule, we should drop a fresh app.ini into place.
-# NOTE: Since app.ini is modified as we go, we do NOT want this task run/tested for idempotence
-#       The file will have been modified, so the copy here would be a changed task
-# If NOT under molecule, then we definitely do NOT want to overwrite the app.ini, since it
-# will have tokens etc. in it that we need to keep.
-- name: setup - Copy initial config app.ini
-  template:
-    src: "{{ item.src }}"
-    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ item.dest }}{% endif %}{% endfor %}'
-    owner: git
-    group: git
-    mode: "{{ item.mode }}"
-    force: "{{ item.force }}"
-  with_items:
-    - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: "{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}yes{% else %}no{% endif %}" }
-  tags: molecule-idempotence-notest
+- name: app.ini - check for existence of app.ini
+  stat:
+    path: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_app_ini_file }}{% endif %}{% endfor %}'
+  register: gitea_app_ini_file
+
+#
+# If the app.ini file is NOT there, generate secret tokens to include
+# Assumption here is that if app.ini exists, it's a valid one from an
+# existing installation
+#
+- when: not gitea_app_ini_file.stat.exists
+  block:
+    - name: Run gitea in a container to generate secrets
+      community.docker.docker_container:
+        name: gitea_secrets
+        image: gitea/gitea
+        detach: false
+        command: ["/app/gitea/gitea", "generate", "secret", "{{ item }}"]
+      register: gitea_secrets
+      loop:
+        - "INTERNAL_TOKEN"
+        - "SECRET_KEY"
+        - "JWT_SECRET"
+    
+    - name: Remove the secrets container
+      community.docker.docker_container:
+        name: gitea_secrets
+        state: absent
+    
+# Create a secrets dict - used in templates/gitea_app.ini.j2
+    #   gitea_app_secrets:
+    #     INTERNAL_TOKEN: secret string
+    #     JWT_SECRET: secret string
+    #     SECRET_KEY: secret string
+    - name: Create gitea_app_secrets
+      set_fact:
+        gitea_app_secrets: "{{ gitea_app_secrets | default({}) | combine( { item.item: item.container.Output } ) }}"
+      loop: "{{ gitea_secrets.results }}"
+    
+    # If runnng under molecule, this may be local testing, in which cast /stuff/gitea may
+    # already exist on the local machine. For repeated runs under molecule, we should drop a fresh app.ini into place.
+    # NOTE: Since app.ini is modified as we go, we do NOT want this task run/tested for idempotence
+    #       The file will have been modified, so the copy here would be a changed task
+    # If NOT under molecule, then we definitely do NOT want to overwrite the app.ini, since it
+    # will have tokens etc. in it that we need to keep.
+    - name: setup - Copy initial config app.ini
+      template:
+        src: "{{ item.src }}"
+        dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ item.dest }}{% endif %}{% endfor %}'
+        owner: git
+        group: git
+        mode: "{{ item.mode }}"
+        force: "{{ item.force }}"
+      with_items:
+        - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: "{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}yes{% else %}no{% endif %}" }
+      tags: molecule-idempotence-notest
+  #
+  # block
 
 - name: setup - Copy docker container systemd unit files
   template:
