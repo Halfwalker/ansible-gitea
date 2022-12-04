@@ -36,6 +36,10 @@ ExecStart=/usr/bin/docker run --rm --name drone-runner{% if lookup('env', 'MOLEC
     -e DRONE_UI_USERNAME=root \
     -e DRONE_UI_PASSWORD=root \
     -p {{ gitea_dronerunner_port }}:3000 \
+{# We don't need the docker network under molecule #}
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
+    --network {{ gitea_network_name }} \
+{% endif %}
     -v /var/run/docker.sock:/var/run/docker.sock \
     drone/drone-runner-docker:latest
 

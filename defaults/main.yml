@@ -9,6 +9,9 @@ force_update: false
 # Shall we install drone and drone-runner as well ?
 enable_drone: true
 
+# Docker network name for gitea/drone/drone-runner to live in
+gitea_network_name: ci-cd
+
 # What ports each service listens on
 # The _internal_ ports are what the service listens on inside its container
 # These are needed for molecule testing to verify the ports are open, and should

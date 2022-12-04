@@ -41,6 +41,10 @@ ExecStart=/usr/bin/docker run --rm --name gitea{% if lookup('env', 'MOLECULE_SCE
     -e USER_GID={{ getent_passwd['git'][2] }} \
     -p {{ gitea_container_port }}:3000 \
     -p 127.0.0.1:2222:22 \
+{# We don't need the docker network under molecule #}
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
+    --network {{ gitea_network_name }} \
+{% endif %}
     -v /etc/localtime:/etc/localtime:ro \
     -v /etc/timezone:/etc/timezone:ro \
 {% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}{% if item.volumes is defined %}{% for vol in item.volumes %}

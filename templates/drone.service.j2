@@ -32,6 +32,10 @@ ExecStart=/usr/bin/docker run --rm --name drone{% if lookup('env', 'MOLECULE_SCE
     --env-file "{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/molecule_test{{ gitea_admin_token_file }}" \
 {% endif %}
     -p {{ gitea_drone_port }}:80 \
+{# We don't need the docker network under molecule #}
+{% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
+    --network {{ gitea_network_name }} \
+{% endif %}
     -v /var/run/docker.sock:/var/run/docker.sock \
 {% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}{% if item.volumes is defined %}{% for vol in item.volumes %}
     -v {{ vol.host }}:{{ vol.cont }} \

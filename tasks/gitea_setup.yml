@@ -140,6 +140,11 @@
   #
   # block
 
+- name: setup - Ensure the docker network exists - {{ gitea_network_name }}
+  community.docker.docker_network:
+    name: "{{ gitea_network_name }}"
+  when: not lookup('env', 'MOLECULE_SCENARIO_NAME')
+
 - name: setup - Copy docker container systemd unit files
   template:
     src:  "{{ item.name }}.service.j2"
@@ -216,10 +221,11 @@
 # the host value is just the IP address of the gitea container.
 - name: setup - Wait for gitea container to start up
   wait_for:
-    host: "{{ gitea_container_info.container.NetworkSettings.IPAddress }}"
-    # port: "{% for container in gitea_containers %}{% if container.name == 'gitea' %}{% if container.port is defined %}{{ container.port }}{% else %}3000{% endif %}{% endif %}{% endfor %}"
+    # host: "{{ gitea_container_info.container.NetworkSettings.IPAddress }}"
+    host: "{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}"
     port: "{{ gitea_container_port }}"
     delay: 5
+    timeout: 20
   when: gitea_start_container.changed {% if gitea_start_container2 is defined %}or gitea_start_container2.changed{% endif %}
   tags: molecule-idempotence-notest
 
