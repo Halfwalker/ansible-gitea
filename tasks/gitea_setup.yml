@@ -189,16 +189,16 @@
     - not gitea_start_container.changed
   ignore_errors: true
 
-- name: What containers are running
-  command: "docker ps -a"
-  become: yes
-  register: containers_running
-  changed_when: false
-  tags: molecule-idempotence-notest
+# - name: What containers are running
+#   command: "docker ps -a"
+#   become: yes
+#   register: containers_running
+#   changed_when: false
+#   tags: molecule-idempotence-notest
 
-- debug:
-    var=containers_running
-  tags: molecule-idempotence-notest
+# - debug:
+#     var=containers_running
+#   tags: molecule-idempotence-notest
 
 - name: Get info on gitea container
   community.general.docker_container_info:
@@ -206,9 +206,9 @@
     docker_host: "{{ lookup('env', 'DOCKER_HOST') }}"
   register: gitea_container_info
 
-- debug:
-    var=gitea_container_info
-    # var=gitea_container_info.container.NetworkSettings.IPAddress
+# - debug:
+#     var=gitea_container_info
+#     # var=gitea_container_info.container.NetworkSettings.IPAddress
 
 # Since under molecule the container won't necessarily be on the same "host"
 # we can't use a plain port check. We have to specify the host the container is
