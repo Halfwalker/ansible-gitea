@@ -11,7 +11,7 @@ ConditionFileIsExecutable=/usr/bin/avahi-publish
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c "/usr/bin/avahi-publish -a -R %i.local $(/sbin/ip ro sh | /bin/fgrep default | /usr/bin/mawk '{print $9}')"
+ExecStart=/bin/bash -c "/usr/bin/avahi-publish -a -R %i.local $(/sbin/ip ro get 192.168.2.0/24 | /usr/bin/head -1 | /usr/bin/cut -d' ' -f6)"
 
 [Install]
 WantedBy=%i.service
