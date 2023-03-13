@@ -211,21 +211,32 @@
     docker_host: "{{ lookup('ansible.builtin.env', 'DOCKER_HOST') }}"
   register: gitea_container_info
 
-# - debug:
-#     var=gitea_container_info
-#     # var=gitea_container_info.container.NetworkSettings.IPAddress
+# See Wait for gitea container to start up task below for why we need this stupid thing
+- name: setup - Set fact to wait for gitea to start up
+  set_fact:
+    wait_for_gitea: "{% if gitea_start_container.changed or ( gitea_start_container2 is defined and gitea_start_container2.changed ) %}true{% else %}false{% endif %}"
 
 # Since under molecule the container won't necessarily be on the same "host"
 # we can't use a plain port check. We have to specify the host the container is
 # running on - we get the IP for the container from the tasks just above.  Then
 # the host value is just the IP address of the gitea container.
+# NOTE: Under normal circumstances, gitea runs in a docker network "ci-cd" by default
+#       In which case the NetworkSettings.IPAddress will be empty, the actual address
+#       will be in NetworkSettings.Networks.ci-cd.IPAddress. But in normal circumstances
+#       we use the inventory_hostname for the host to check, so it's all good.
+#       Under molecule, we do NOT use a docket network, so that NetworkSettings.IPAddress
+#       will have the real IP, and will be used via the if lookup below.
+# NOTE: Used to have when: gitea_start_container.changed {% if gitea_start_container2 is defined %}or gitea_start_container2.changed{% endif %}
+#       but that causes an error msg: The lookup `ansible.builtin.env` was found, however lookups were disabled from templating
+#       So now we have to create the wait_for_gitea variable above using the same logic
+#       and use THAT for the when: clause.  Blasted ansible.
 - name: setup - Wait for gitea container to start up
   wait_for:
     # host: "{{ gitea_container_info.container.NetworkSettings.IPAddress }}"
-    host: "{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}"
+    host: "{% if lookup('ansible.builtin.env', 'MOLECULE_SCENARIO_NAME') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}"
     port: "{{ gitea_container_port }}"
     delay: 5
-    timeout: 20
-  when: gitea_start_container.changed {% if gitea_start_container2 is defined %}or gitea_start_container2.changed{% endif %}
+    timeout: 30
+  when: wait_for_gitea
   tags: molecule-idempotence-notest
 
