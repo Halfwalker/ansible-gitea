@@ -207,8 +207,8 @@
 
 - name: Get info on gitea container
   community.general.docker_container_info:
-    name: "gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %}"
-    docker_host: "{{ lookup('env', 'DOCKER_HOST') }}"
+    name: "gitea{% if lookup('ansible.builtin.env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %}"
+    docker_host: "{{ lookup('ansible.builtin.env', 'DOCKER_HOST') }}"
   register: gitea_container_info
 
 # - debug:
