@@ -219,9 +219,9 @@
       assert:
         that:
           - gitea_admin_token_remote.stat.exists
-          - gitea_admin_token is defined
-          - gitea_client_id is defined
-          - gitea_client_secret is defined
+          - gitea_admin_token is defined and gitea_admin_token | length > 0
+          - gitea_client_id is defined and gitea_client_id | length > 0
+          - gitea_client_secret is defined and gitea_client_secret | length > 0
         fail_msg:
           - "----------------------------------------------------------------------------------------------------"
           - "| Since {{ gitea_drone_admin }} is a live user in gitea,"
