@@ -118,12 +118,34 @@
     - debug:
         var=gitea_create_admin
 
+    #
+    # NOTE: As of 1.19, by default access tokens are created with NO scope, so have no power.
+    #       So we can't use the token given by the create user above. Instead we generate
+    #       a new token with the appropriate scope to be able to create the oauth2 application
+    #
       # Access token was successfully created... 4b3824f3524cf105473c9c57b7756c1c2cbffcb7
       # New user 'droneadmin' has been successfully created!
       # Returns an array with one item, so use | first filter to get just string
-    - name: new user - Extract token from new user {{ gitea_drone_admin }}
+    # - name: new user - Extract token from new user {{ gitea_drone_admin }}
+    #   set_fact:
+    #     gitea_admin_token: "{{ gitea_create_admin.stdout | regex_search('successfully created\\.\\.\\. (.*)\\n.*$', '\\1') | first }}"
+
+
+    - name: new_user - Create scoped access token for Drone admin
+      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user generate-access-token --username {{ gitea_drone_admin }} --token-name oauth2-application --scopes repo,admin:repo_hook,notification,user,admin:application
+      register: gitea_create_token
+      changed_when: false
+      retries: 5
+      delay: 10
+      until: gitea_create_token.rc == 0
+
+    - debug:
+        var=gitea_create_token
+
+      # Access token was successfully created: f383294c67240e260d4b89768c744bad36b50409
+    - name: new user - Extract token from new access token above for {{ gitea_drone_admin }}
       set_fact:
-        gitea_admin_token: "{{ gitea_create_admin.stdout | regex_search('created\\.\\.\\. (.*)\\n.*$', '\\1') | first }}"
+        gitea_admin_token: "{{ gitea_create_token.stdout | regex_search('successfully created: (.*)$', '\\1') | first }}"
 
     - name: new user - Save token in {{ gitea_admin_token_file }}
       copy:
