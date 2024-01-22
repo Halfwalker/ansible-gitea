@@ -60,7 +60,8 @@ ExecReload=/usr/bin/docker restart gitea
 
 Restart=always
 RestartSec=20s
-Type=simple
+{# https://blog.gitea.com/release-of-1.20.0/#rocket-systemd-notify-support-21151 #}
+Type=notify
 NotifyAccess=all
 
 [Install]

@@ -8,13 +8,13 @@ The `defaults/main.yml` file defines the variable `gitea_datasets` which define 
 
 ## Important files
 
-/drone/drone.env
+_/drone/drone.env_
 : Contains env variables to configure drone, drone-runner and drone-runner-exec.
 
-/drone/drone_cmdline.env
+_/drone/drone_cmdline.env_
 : Contains the **DRONE_TOKEN** and **DRONE_SERVER** variables which hold the token and server location needed for the `drone` cmdline too.
 
-/gitea/admin.tokens
+_/gitea/admin.tokens_
 : Contains the **client_id** and **client_secret** variables drone needs for access to gitea
 
 NOTE: drone pulls images defined in the .drone.yml with no authentication.  See [How to prevent DockerHub pull rate limit errors](https://discourse.drone.io/t/how-to-prevent-dockerhub-pull-rate-limit-errors/8324/1) for how to login
@@ -37,35 +37,35 @@ This redirects incoming ssh sessions for the `git` user to `localhost:2222`.  Th
 
 Available variables are listed below along with default values (see `defaults/main.yml`)
 
-    force_update: false
+* `force_update: false`
 
-Whether or not to remove any config files before installing.  This ensures a clean install.  Currently the following files can be removed:
+    Whether or not to remove any config files before installing.  This ensures a clean install.  Currently the following files can be removed:
 
-_/drone/drone.env_
+    _/drone/drone.env_
 
-    enable_drone: true
+* `enable_drone: true`
 
-Whether or not to install drone and drone-runner containers for CI/CD
+    Whether or not to install drone and drone-runner containers for CI/CD
 
-    gitea_container_port: 3000
-    gitea_drone_port: 3001
-    gitea_dronerunner_port: 3002
+* `gitea_container_port: 3000`  
+`gitea_drone_port: 3001`  
+`gitea_dronerunner_port: 3002`
 
-Defines what port each container will listen on
+    Defines what port each container will listen on
 
-    gitea_drone_internal_port: 80
-    gitea_dronerunner_internal_port: 3000
+* `gitea_drone_internal_port: 80`  
+`gitea_dronerunner_internal_port: 3000`
 
-These are the ports that drone and drone-runner listen on internally - these vars are used by the molecule testing _molecule/default/tests/test_default.yml_ goss file to verify that the containers are running.
+    These are the ports that drone and drone-runner listen on internally - these vars are used by the molecule testing _molecule/default/tests/test_default.yml_ goss file to verify that the containers are running.
 
-    username: "{{ vault_username | default(ansible_user_id) }}"
+* `username: "{{ vault_username | default(ansible_user_id) }}"`
 
-Used for file ownership and first admin user in Gitea (see `gitea_drone_admin` below)  Will be pulled from vault if available.
+    Used for file ownership and first admin user in Gitea (see `gitea_drone_admin` below)  Will be pulled from vault if available.
 
-    gitea_drone_admin: droneadmin
-    gitea_drone_pass: <some password>
+* `gitea_drone_admin: droneadmin`  
+`gitea_drone_pass: <some password>`
 
-When Gitea is installed a primary admin user is created with this name.  This is needed in order to generate the oauth2 `client_id` and `client_secret` variables that drone needs to access Gitea.
+    When Gitea is installed a primary admin user is created with this name.  This is needed in order to generate the oauth2 `client_id` and `client_secret` variables that drone needs to access Gitea.
 
 ## Example playbook (gitea.yml)
 
@@ -94,11 +94,39 @@ Pick the ubuntu version to test under (ubuntu2204, ubuntu2004).  Molecule can be
 
 *NOTE:* The environment variable DOCKER_HOST must set to the local `/var/run/docker.sock` - that way docker commands will use the volume-mounted `/var/run/docker.sock` to access the current local host docker daemon.
 
-    docker run --rm -it -e MOLECULE_DISTRO=ubuntu2204 -e DOCKER_HOST=unix:///var/run/docker.sock -v "$(pwd)":"${PWD}" -w "${PWD}" -v /var/run/docker.sock:/var/run/docker.sock quay.io/halfwalker/toolset molecule test
+    docker run --rm -it -e MOLECULE_DISTRO=ubuntu2204 -e DOCKER_HOST=unix:///var/run/docker.sock -v "$(pwd)":"${PWD}" -w "${PWD}" -v /var/run/docker.sock:/var/run/docker.sock quay.io/halfwalker/toolset2 molecule test
 
-The _molecule/default/prepare.yml_ will create a temp directory _molecule/default/molecule_test_  to act as a directory to store the usual gitea and drone data.  Running molecule as above will create a docker container named *instance-ubuntu2204* to run the role against.  Being local testing, it will use the local docker daemon for when the gitea, drone and drone-runner containers are created.  Those containers and the _molecule_test_ directly will all be removed by _molecule/default/cleanup.yml_ when the testing run completes.
+The _molecule/default/prepare.yml_ will create a temp directory _molecule/default/molecule_test_  to act as a directory to store the usual gitea and drone data.  Running molecule as above will create a docker container named *instance-ubuntu2204* to run the role against.
+
+Being local testing, it will use the local docker daemon for when the gitea, drone and drone-runner containers are created.  Those containers and the _molecule_test_ directly will all be removed by _molecule/default/cleanup.yml_ when the testing run completes.
 
 ## TODO
 
 - Set up a way to use the docker-in-docker (dind) container for all the molecule testing.  This would remove any touching of the local system during a molecule testing run.
 - Get proper multi-user Drone working.  See https://discourse.drone.io/t/drone-clis-token-option-does-not-work/6871
+- Switch to the `quay.io/halfwalker/alpineset2` build container.  This is built with alpine, and only contains what's necessary for ansible/molecule/testinfra testing.  No Openstack/Vault/Hammer etc.
+- Switch to using podman for molecule.
+- With podman, switch to podman containers for gitea/drone/drone-runner all within the alpineset2 build container.
+- github actions method to show email address (from https://discordapp.com/channels/322538954119184384/1069795723178160168/1168589987026055259)
+    ```   
+    on:
+      push:
+    
+    jobs:
+      comment:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/github-script@v6
+            id: get-mail
+            with:
+              github-token: ${{secrets.GITHUB_TOKEN}}
+              script: |
+                return (await github.rest.users.getByUsername({
+                  username: ${{ tojson(github.event.sender.login) }}
+                })).data.email;
+              result-encoding: string
+          - name: Print Email
+            run: |
+              echo ${{ steps.get-mail.outputs.result }}
+    ```
+

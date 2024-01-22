@@ -224,7 +224,7 @@
 #       In which case the NetworkSettings.IPAddress will be empty, the actual address
 #       will be in NetworkSettings.Networks.ci-cd.IPAddress. But in normal circumstances
 #       we use the inventory_hostname for the host to check, so it's all good.
-#       Under molecule, we do NOT use a docket network, so that NetworkSettings.IPAddress
+#       Under molecule, we do NOT use a docker network, so that NetworkSettings.IPAddress
 #       will have the real IP, and will be used via the if lookup below.
 # NOTE: Used to have when: gitea_start_container.changed {% if gitea_start_container2 is defined %}or gitea_start_container2.changed{% endif %}
 #       but that causes an error msg: The lookup `ansible.builtin.env` was found, however lookups were disabled from templating
