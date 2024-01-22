@@ -1,0 +1,85 @@
+---
+
+#
+# This is dependent on the format of the compressed tarfile
+#   gitea/act_runner/dist/act_runner-main-linux-amd64
+#   ^^^^^^^^^^^^^^^^^^^^^^
+#      strip these
+#
+# docker-compose for act_runner
+# version: "3"
+# 
+# services:
+#   gitea_runner:
+#     # image: gitea/act_runner:nightly
+#     image: gitea/act_runner:0.1.8
+#     container_name: gitea_runner
+#     restart: always
+#     volumes:
+#       - ./data/act_runner:/data
+#       - /var/run/docker.sock:/var/run/docker.sock
+#     environment:
+#       - GITEA_INSTANCE_URL=http://gitea.local
+#       - GITEA_RUNNER_REGISTRATION_TOKEN=Div7z6Z1DNFUQgSuGasp1IAr4ldHcQXlaCp2eYKP
+#
+- name: act - Fetch Gitea ACT runner
+  unarchive:
+    src: "https://dl.gitea.com/act_runner/{{ gitea_act_version }}/act_runner-{{ gitea_act_version }}-linux-amd64.xz"
+    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}'
+    creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64'
+    extra_opts:
+      - --strip-components
+      - 3
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
+# Set gitea container name if we're running under molecule
+# eg. gitea-ubuntu-jammy under molecule, or gitea for normal use
+# MOLECULE_SCENARIO_NAME is set in molecule/default/molecule.yml
+# The existence of that tells us we're under molecule
+# Needs to be changed_when: false because it always changes, so will fail idepmotence
+# https://github.com/go-gitea/gitea/pull/23762
+- name: act - Fetch runner token from Gitea container
+  ansible.builtin.command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea generate-runner-token
+  register: gitea_runner_token
+  changed_when: false
+
+- debug:
+    var=gitea_runner_token
+
+- name: act - Register ACT runner with Gitea
+  ansible.builtin.command: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 register --instance http://{{ inventory_hostname }}:{{ gitea_container_port }} --token {{ gitea_runner_token.results.container.Output }} --no-interactive'
+  become: yes
+  become_user: "{{ username }}"
+  args:
+    chdir: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}'
+    creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/.runner'
+
+- name: act - Create default ACT runner config
+  ansible.builtin.command: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 generate-config > {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
+  become: yes
+  become_user: "{{ username }}"
+  args:
+    chdir: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}'
+    creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
+
+- name: act - Set container default to allow privileged
+  replace:
+    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
+    regexp: 'privileged: false'
+    replace: 'privileged: true'
+
+- name: act - Copy ACT runner systemd unit file
+  template:
+    src:  act_runner.service.j2
+    dest: /etc/systemd/system/act_runner.service
+    mode: 0644
+
+- name: act - Enable and start ACT runner
+  systemd:
+    name: act_runner.service
+    daemon_reload: yes
+    enabled: yes
+    state: started
+

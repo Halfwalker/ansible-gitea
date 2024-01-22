@@ -1,0 +1,22 @@
+[Unit]
+Description=ACT runner for Gitea
+After=network-online.target network.target systemd-networkd.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory={% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
+
+ExecStartPre=/bin/mountpoint {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
+
+ExecStartPre=/usr/bin/test -f {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}/.runner{% endif %}{% endfor %}
+ExecStart={% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 -c {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml daemon
+
+Restart=always
+RestartSec=20s
+
+User={{ username }}
+Group={{ username }}
+
+[Install]
+WantedBy=multi-user.target

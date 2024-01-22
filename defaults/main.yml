@@ -9,6 +9,11 @@ force_update: false
 # Shall we install drone and drone-runner as well ?
 enable_drone: true
 
+# Shall we install the act runner and enable it ?
+enable_act: true
+# What version to install
+gitea_act_version: 0.2.6
+
 # Docker network name for gitea/drone/drone-runner to live in
 gitea_network_name: ci-cd
 
