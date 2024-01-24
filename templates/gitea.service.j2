@@ -18,7 +18,8 @@ TimeoutStartSec=infinity
 
 {% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
 {% if item.volumes is defined %}{% for vol in item.volumes %}
-ExecStartPre=/bin/mountpoint {{ vol.host }}
+{# Only need to check for mountpoint if using ZFS. Opinionated ... #}
+{% if not ZFS_installed.stat.exists %}# {% endif %}ExecStartPre=/bin/mountpoint {{ vol.host }}
 {% endfor %}{% endif %}
 {% endif %}
 ExecStartPre=-/usr/bin/docker kill gitea
@@ -61,7 +62,7 @@ ExecReload=/usr/bin/docker restart gitea
 Restart=always
 RestartSec=20s
 {# https://blog.gitea.com/release-of-1.20.0/#rocket-systemd-notify-support-21151 #}
-Type=notify
+Type=simple
 NotifyAccess=all
 
 [Install]

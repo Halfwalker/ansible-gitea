@@ -7,9 +7,11 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory={% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
 
-ExecStartPre=/bin/mountpoint {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
+{# Only need to check for mountpoint if using ZFS. Opinionated ... #}
+{% if not ZFS_installed.stat.exists %}# {% endif %}ExecStartPre=/bin/mountpoint {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
 
 ExecStartPre=/usr/bin/test -f {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}/.runner{% endif %}{% endfor %}
+
 ExecStart={% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 -c {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml daemon
 
 Restart=always

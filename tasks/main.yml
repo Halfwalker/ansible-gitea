@@ -3,15 +3,46 @@
 # jmespath info
 # https://www.middlewareinventory.com/blog/ansible_json_query/
 
+- name: Assert that username and groupname are defined
+  assert:
+    that:
+      - username is defined
+    msg:
+      - "----------------------------------------------------------------------------------------------------"
+      - "| Must define username for file ownership tasks"
+      - "----------------------------------------------------------------------------------------------------"
+
+- when: groupname is not defined
+  block:
+    - name: Get passwd DB entry for {{ username }}
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ username }}"
+      register: user_pw
+
+    - name: Get group DB entry for {{ username }}
+      ansible.builtin.getent:
+        database: group
+        key: "{{ user_pw.ansible_facts.getent_passwd[username][2] }}"
+      register: user_gid
+
+    - name: Set groupname fact to {{ user_gid.ansible_facts.getent_group.keys() | first }}
+      set_fact:
+        groupname: "{{ user_gid.ansible_facts.getent_group.keys() | first }}"
+  #
+  # block
+
 - name: Check for docker
   stat:
     path: /usr/bin/docker
   register: installed_docker
+  check_mode: no
 
-- name: Check for systemd-docker
+- name: Check if ZFS installed
   stat:
-    path: /usr/local/bin/systemd-docker
-  register: installed_systemddocker
+    path: /sbin/zpool
+  register: ZFS_installed
+  check_mode: no
 
 - name: Validate that docker is installed
   assert:
