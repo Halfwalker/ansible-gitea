@@ -131,8 +131,9 @@
     #     gitea_admin_token: "{{ gitea_create_admin.stdout | regex_search('successfully created\\.\\.\\. (.*)\\n.*$', '\\1') | first }}"
 
 
+    # scopes WAS repo,admin:repo_hook,notification,user,admin:application
     - name: new_user - Create scoped access token for Drone admin
-      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user generate-access-token --username {{ gitea_drone_admin }} --token-name oauth2-application --scopes repo,admin:repo_hook,notification,user,admin:application
+      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user generate-access-token --username {{ gitea_drone_admin }} --token-name oauth2-application --scopes {{ gitea_drone_scopes }}
       register: gitea_create_token
       changed_when: false
       retries: 5
@@ -146,12 +147,6 @@
     - name: new user - Extract token from new access token above for {{ gitea_drone_admin }}
       set_fact:
         gitea_admin_token: "{{ gitea_create_token.stdout | regex_search('successfully created: (.*)$', '\\1') | first }}"
-
-    - name: new user - Save token in {{ gitea_admin_token_file }}
-      copy:
-        dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
-        content: "GITEA_DRONE_TOKEN={{ gitea_admin_token }}"
-        mode: '0600'
 
 
     - name: new user - Create droneadmin oauth2 application for Drone
@@ -183,17 +178,13 @@
         gitea_client_secret: "{{ gitea_create_oauth2.content | regex_search('client_secret\":\"(.*)\",.*\"redirect_uris.*', '\\1') | first }}"
 
     - name: new user - Save token and oauth2 info in {{ gitea_admin_token_file }}
-      ini_file:
-        path: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
-        section: null
-        option: "{{ item.tag }}"
-        value: "{{ item.value }}"
-        no_extra_spaces: yes
+      copy:
+        dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_admin_token_file }}{% endif %}{% endfor %}'
+        content: |
+          GITEA_DRONE_TOKEN={{ gitea_admin_token }}
+          DRONE_GITEA_CLIENT_ID={{ gitea_client_id }}
+          DRONE_GITEA_CLIENT_SECRET={{ gitea_client_secret }}
         mode: '0600'
-      with_items:
-        - { tag: GITEA_DRONE_TOKEN,         value: "{{ gitea_admin_token }}" }
-        - { tag: DRONE_GITEA_CLIENT_ID,     value: "{{ gitea_client_id }}" }
-        - { tag: DRONE_GITEA_CLIENT_SECRET, value: "{{ gitea_client_secret }}" }
   #
   # block
 

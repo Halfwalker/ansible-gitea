@@ -96,9 +96,16 @@ gitea_drone_env_file: /drone/drone.env
 # Used by local user to set environment vars for drone cmdline tool
 gitea_drone_cmdline_env_file: /drone/drone_cmdline.env
 
+# Scopes for Drone
+# WAS repo,admin:repo_hook,notification,user,admin:application
+gitea_drone_scopes: write:repository,read:admin,read:notification,write:user
+
 # Location of gitea admin ID access token - inside gitea dataset
 # Also holds client_id and client_secret for oauth2 access for droneadmin user
 gitea_admin_token_file: /gitea/admin.tokens
 
 # Location of main config file app.ini
 gitea_app_ini_file: /gitea/conf/app.ini
+
+# Location of main runner config file
+gitea_runner_ini_file: /gitea/.runner
