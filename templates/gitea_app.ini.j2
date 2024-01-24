@@ -70,10 +70,10 @@ ENABLE_FEDERATED_AVATAR       = true
 PATH = /data/gitea/attachments
 
 [log]
-MODE      = console
-LEVEL     = info
-ROUTER    = console
-ROOT_PATH = /data/gitea/log
+MODE               = console
+LEVEL              = info
+logger.router.MODE = console
+ROOT_PATH          = /data/gitea/log
 
 [security]
 INSTALL_LOCK   = true
