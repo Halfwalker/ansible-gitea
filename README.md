@@ -88,6 +88,14 @@ For adminstration of Gitea use the `gitea_drone_admin` and `gitea_drone_pass` va
     source /stuff/gitea/drone/drone_cmdline.env
     drone info
 
+## Admin users
+
+A regular user of Drone cannot enable privileged container settings *(repo -> Settings -> Project Settings -> **Trusted**)*.  In order to run privileged containers, a regular user (eg. *octocat*) must be updated to Admin.  Keep in mind that this user then has admin control over Drone ...
+
+    source /stuff/gitea/drone/drone_cmdline.env
+    drone user update octocat --admin
+
+
 ## Molecule testing
 
 Pick the ubuntu version to test under (ubuntu2204, ubuntu2004).  Molecule can be run locally if installed, or via a toolset container.  The container method is slightly more complex (see cmdline below) but does not require anything on the local system other than docker.
