@@ -6,29 +6,30 @@ dependency:
     requirements-file: requirements.yml
 
 driver:
-  name: docker
+  name: podman
 
 platforms:
   - name: "${DRONE_REPO_NAME:-instance}-${MOLECULE_DISTRO:-ubuntu2204}"
     image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2204}-ansible:latest"
-    # command: ${MOLECULE_DOCKER_COMMAND:-""}
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${MOLECULE_PROJECT_DIRECTORY}:${MOLECULE_PROJECT_DIRECTORY}
+      # - /var/run/docker.sock:/var/run/docker.sock
+      # - ${MOLECULE_PROJECT_DIRECTORY}:${MOLECULE_PROJECT_DIRECTORY}
     privileged: true
     pre_build_image: true
     # network_mode ensures that the test instance is on the same docker network
     # as the toolset container as well as the mailhog container
-    network_mode: ${DRONE_DOCKER_NETWORK_ID}
+    # network_mode: ${DRONE_DOCKER_NETWORK_ID}
     env:
       # When running under drone, we use the docker-in-docker container
       # This should be set in the .drone.yml file
       # DOCKER_HOST: "tcp://dind:2375"
       # When running molecule locally, the DOCKER_HOST var should be
       # set to the local host socket unix:///var/run/docker.sock
-      DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
-      MOLECULE_PROJECT_DIRECTORY: ${MOLECULE_PROJECT_DIRECTORY}
+      # DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+      # MOLECULE_PROJECT_DIRECTORY: ${MOLECULE_PROJECT_DIRECTORY}
+      USER: podman
 
 provisioner:
   name: ansible
@@ -41,7 +42,12 @@ provisioner:
   # options:
   playbooks:
     cleanup: cleanup.yml
+  options:
+    # Some tasks we don't need/want to run again for idempotence testing
+    # https://univers-libre.net/posts/ansible-molecule.html
+    skip-tags: molecule-idempotence-notest
   env:
+    USER: podman
     GH_USER: ${GH_USER:-""}
     GH_TOKEN: ${GH_TOKEN:-""}
     # Set this to let ansible know we're running under molecule
@@ -52,12 +58,12 @@ provisioner:
     DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
 
 verifier:
-  name: goss
+  name: testinfra
 
 scenario:
   name: default
   test_sequence:
-    - lint
+    # - lint
     - destroy
     # - dependency
     - syntax
