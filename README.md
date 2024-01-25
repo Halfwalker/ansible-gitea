@@ -108,13 +108,41 @@ The _molecule/default/prepare.yml_ will create a temp directory _molecule/defaul
 
 Being local testing, it will use the local docker daemon for when the gitea, drone and drone-runner containers are created.  Those containers and the _molecule_test_ directly will all be removed by _molecule/default/cleanup.yml_ when the testing run completes.
 
+### Local testing with ACT runner
+
+Testing the same as CI/CD tests can be done with the [Gitea ACT runner](https://docs.gitea.com/usage/actions/act-runner).  A sample run
+
+```
+act_runner-main-linux-amd64 exec push -W .github/workflows/cicd.yml -j Molecule
+```
+
+Note: Using the older `-main-` version as this still supports enabling *privileged* containers in the workflow file (**cicd.yml**) with
+
+```
+    container:
+      image: docker.io/halfwalker/alpineset2
+      options: --privileged
+```
+
+If using the newer `0.2.6` runner than you will need to generate a config and modify the **privileged** option to *true*, as well as modify the **container:** stanza in `cicd.yml`
+
+```
+act_runner-0.2.6 -linux-amd64 generate-config > config.yml
+sed -i 's/privileged: false/privileged: true' config.yml
+act_runner-0.2.6-linux-amd64 --config config.yml exec push -W .github/workflows/cicd.yml -j Molecule
+```
+
+`cicd.yml` changes
+
+```
+    container:
+      image: docker.io/halfwalker/alpineset2
+      privileged: true
+```
+
 ## TODO
 
-- Set up a way to use the docker-in-docker (dind) container for all the molecule testing.  This would remove any touching of the local system during a molecule testing run.
 - Get proper multi-user Drone working.  See https://discourse.drone.io/t/drone-clis-token-option-does-not-work/6871
-- Switch to the `quay.io/halfwalker/alpineset2` build container.  This is built with alpine, and only contains what's necessary for ansible/molecule/testinfra testing.  No Openstack/Vault/Hammer etc.
-- Switch to using podman for molecule.
-- With podman, switch to podman containers for gitea/drone/drone-runner all within the alpineset2 build container.
 - github actions method to show email address (from https://discordapp.com/channels/322538954119184384/1069795723178160168/1168589987026055259)
     ```   
     on:

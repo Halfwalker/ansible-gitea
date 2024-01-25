@@ -1,0 +1,46 @@
+# https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+
+name: Molecule Test
+run-name: Molecule test
+
+on:
+  push:
+  # schedule:
+  #   # Every 1st of the month at 11pm
+  #   - cron: '0 23 1 * *'
+
+
+jobs:
+  Molecule:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version:
+          - "2204"
+          - "2004"
+    container:
+      image: docker.io/halfwalker/alpineset2
+      privileged: true
+      options: --privileged
+    env:
+      # Set DRONE_REPO_NAME to be used in molecule.yml
+      # That way the container name is consistent between github/gitea and Drone
+      DRONE_REPO_NAME: ansible-gitea
+      MOLECULE_DISTRO: ubuntu${{ matrix.version }}
+      PY_COLORS: '1'
+      ANSIBLE_FORCE_COLOR: '1'
+      GH_USER: ${{ secrets.GH_USER }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: See what exists
+        run: |
+          pwd
+          ls -la
+      - run: ansible --version
+      - run: molecule --version
+      - run: yamllint .
+      - run: ansible-lint --force-color
+      - run: molecule test
+
