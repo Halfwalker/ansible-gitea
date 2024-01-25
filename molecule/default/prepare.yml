@@ -9,7 +9,7 @@
     - name: Add testing user
       user:
         name: testing
-        comment: Test user for alacritty
+        comment: Test user for gitea
 
     # Need python3-docker for docker_container_info task
     - name: Add molecule support packages
@@ -28,3 +28,8 @@
         state: directory
         mode: 0755
       delegate_to: localhost
+
+    - name: Ensure docker is running
+      ansible.builtin.service:
+        name: docker
+        state: started
