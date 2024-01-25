@@ -21,19 +21,28 @@
 #     environment:
 #       - GITEA_INSTANCE_URL=http://gitea.local
 #       - GITEA_RUNNER_REGISTRATION_TOKEN=Div7z6Z1DNFUQgSuGasp1IAr4ldHcQXlaCp2eYKP
-#
-- name: act - Fetch Gitea ACT runner
-  get_url:
-    url: "https://dl.gitea.com/act_runner/{{ gitea_act_version }}/act_runner-{{ gitea_act_version }}-linux-amd64.xz"
-    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64.xz'
-    owner: "{{ username }}"
-    group: "{{ groupname }}"
-    mode: '0755'
 
-- name: act - Uncompress Gitea ACT runner
-  ansible.builtin.command: '/usr/bin/xz -d {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64.xz'
-  args:
-    creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64'
+- name: act - Check for existing ACT runner
+  stat:
+    path: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64'
+  register: gitea_runner_exe
+
+- when: not gitea_runner_exe.stat.exists
+  block:
+    - name: act - Fetch Gitea ACT runner
+      get_url:
+        url: "https://dl.gitea.com/act_runner/{{ gitea_act_version }}/act_runner-{{ gitea_act_version }}-linux-amd64.xz"
+        dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64.xz'
+        owner: "{{ username }}"
+        group: "{{ groupname }}"
+        mode: '0755'
+    
+    - name: act - Uncompress Gitea ACT runner
+      ansible.builtin.command: '/usr/bin/xz -d {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64.xz'
+      args:
+        creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64'
+  #
+  # block check for ACT runner
 
 - name: act - Create default ACT runner config
   ansible.builtin.shell: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 generate-config > {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
