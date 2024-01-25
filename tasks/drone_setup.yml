@@ -140,8 +140,8 @@
       delay: 10
       until: gitea_create_token.rc == 0
 
-    - debug:
-        var=gitea_create_token
+    # - debug:
+    #     var=gitea_create_token
 
       # Access token was successfully created: f383294c67240e260d4b89768c744bad36b50409
     - name: new user - Extract token from new access token above for {{ gitea_drone_admin }}
@@ -168,8 +168,8 @@
     # content: |-
     #   {"id":3,"name":"Drone","client_id":"118222af-ecc5-4819-ba79-8093d0cfe419","client_secret":"yiN9LmNjl-ZWGCO2ALKxjtHbLwJeXLfoSjwjLlDslYI=","redirect_uris":["http://test2.local:3080/login"],"created":"2021-02-16T14:41:53-05:00"}
 
-    - debug:
-        var=gitea_create_oauth2
+    # - debug:
+    #     var=gitea_create_oauth2
 
     # Returns an array with one item, so use | first filter to get just string
     - name: new user - Capture new client_id and client_secret
@@ -221,7 +221,8 @@
             gitea_client_id: "{{ lookup('ini', 'DRONE_GITEA_CLIENT_ID type=properties file=/tmp/admin.tokens') }}"
             gitea_client_secret: "{{ lookup('ini', 'DRONE_GITEA_CLIENT_SECRET type=properties file=/tmp/admin.tokens') }}"
 
-        - debug: msg="token {{ gitea_admin_token }} id {{ gitea_client_id }} len={{ gitea_client_id | length }} secret {{ gitea_client_secret }}"
+        # - debug:
+        #   msg="token {{ gitea_admin_token }} id {{ gitea_client_id }} len={{ gitea_client_id | length }} secret {{ gitea_client_secret }}"
       #
       # block
 
