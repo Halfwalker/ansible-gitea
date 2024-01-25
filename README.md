@@ -127,9 +127,8 @@ Note: Using the older `-main-` version as this still supports enabling *privileg
 If using the newer `0.2.6` runner than you will need to generate a config and modify the **privileged** option to *true*, as well as modify the **container:** stanza in `cicd.yml`
 
 ```
-act_runner-0.2.6 -linux-amd64 generate-config > config.yml
-sed -i 's/privileged: false/privileged: true' config.yml
-act_runner-0.2.6-linux-amd64 --config config.yml exec push -W .github/workflows/cicd.yml -j Molecule
+act_runner-0.2.6-linux-amd64 generate-config | sed 's/privileged: false/privileged: true' > act_config.yml
+act_runner-0.2.6-linux-amd64 --config act_config.yml exec push -W .github/workflows/cicd.yml -j Molecule
 ```
 
 `cicd.yml` changes

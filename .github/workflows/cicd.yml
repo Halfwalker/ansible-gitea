@@ -5,9 +5,11 @@ run-name: Molecule test
 
 on:
   push:
-  # schedule:
-  #   # Every 1st of the month at 11pm
-  #   - cron: '0 23 1 * *'
+    paths_ignore:
+      - '**.md'
+  schedule:
+    # Every 1st of the month at 10pm
+    - cron: '0 22 1 * *'
 
 
 jobs:
@@ -20,7 +22,9 @@ jobs:
           - "2004"
     container:
       image: docker.io/halfwalker/alpineset2
+      # This option for using v0.2.6 ACT runner
       privileged: true
+      # This option for using old -main- ACT runner
       options: --privileged
     env:
       # Set DRONE_REPO_NAME to be used in molecule.yml

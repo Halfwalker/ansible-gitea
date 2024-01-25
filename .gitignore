@@ -26,3 +26,5 @@ tags
 # Persistent undo
 [._]*.un~
 
+# ACT runner config - see README.md
+act_config.yml
