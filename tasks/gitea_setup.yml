@@ -110,7 +110,7 @@
         name: gitea_secrets
         state: absent
 
-# Create a secrets dict - used in templates/gitea_app.ini.j2
+    # Create a secrets dict - used in templates/gitea_app.ini.j2
     #   gitea_app_secrets:
     #     INTERNAL_TOKEN: secret string
     #     JWT_SECRET: secret string
@@ -135,15 +135,15 @@
         mode: "{{ item.mode }}"
         force: "{{ item.force }}"
       with_items:
-        - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: "{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}yes{% else %}no{% endif %}" }
-      tags: molecule-idempotence-notest
+        - { src: gitea_app.ini.j2, dest: /gitea/conf/app.ini, mode: '0644', force: "{% if lookup('env', 'MOLECULE_DISTRO') %}yes{% else %}no{% endif %}" }
+      # tags: molecule-idempotence-notest
   #
   # block
 
 - name: setup - Ensure the docker network exists - {{ gitea_network_name }}
   community.docker.docker_network:
     name: "{{ gitea_network_name }}"
-  when: not lookup('env', 'MOLECULE_SCENARIO_NAME')
+  when: not lookup('env', 'MOLECULE_DISTRO')
 
 - name: setup - Copy docker container systemd unit files
   template:
@@ -205,16 +205,19 @@
 #     var=containers_running
 #   tags: molecule-idempotence-notest
 
-- name: Get info on gitea container
-  community.general.docker_container_info:
-    name: "gitea{% if lookup('ansible.builtin.env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %}"
-    docker_host: "{{ lookup('ansible.builtin.env', 'DOCKER_HOST') }}"
-  register: gitea_container_info
-
 # See Wait for gitea container to start up task below for why we need this stupid thing
 - name: setup - Set fact to wait for gitea to start up
   set_fact:
     wait_for_gitea: "{% if gitea_start_container.changed or ( gitea_start_container2 is defined and gitea_start_container2.changed ) %}true{% else %}false{% endif %}"
+
+- name: setup - Get info on gitea container
+  community.general.docker_container_info:
+    name: "gitea{% if lookup('ansible.builtin.env', 'MOLECULE_DISTRO') %}-ubuntu-{{ ansible_distribution_release }}{% endif %}"
+    # docker_host: "{% if lookup('ansible.builtin.env', 'DOCKER_HOST') %}{{ lookup('ansible.builtin.env', 'DOCKER_HOST') }}{% else %}unix://var/run/docker.sock{% endif %}"
+  until: gitea_container_info.exists
+  retries: 5
+  delay: 5
+  register: gitea_container_info
 
 # Since under molecule the container won't necessarily be on the same "host"
 # we can't use a plain port check. We have to specify the host the container is
@@ -233,10 +236,10 @@
 - name: setup - Wait for gitea container to start up
   wait_for:
     # host: "{{ gitea_container_info.container.NetworkSettings.IPAddress }}"
-    host: "{% if lookup('ansible.builtin.env', 'MOLECULE_SCENARIO_NAME') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}"
+    host: "{% if lookup('ansible.builtin.env', 'MOLECULE_DISTRO') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}"
     port: "{{ gitea_container_port }}"
     delay: 5
     timeout: 30
   when: wait_for_gitea
-  tags: molecule-idempotence-notest
+  # tags: molecule-idempotence-notest
 
