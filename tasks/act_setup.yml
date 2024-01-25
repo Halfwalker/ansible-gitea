@@ -46,8 +46,6 @@
 
 - name: act - Create default ACT runner config
   ansible.builtin.shell: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 generate-config > {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
-  become: yes
-  become_user: "{{ username }}"
   args:
     chdir: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}'
     creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
@@ -78,9 +76,7 @@
     
     - name: act - Register ACT runner with Gitea
       # ansible.builtin.command: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 register --instance http://{{ inventory_hostname }}:{{ gitea_container_port }} --token {{ gitea_runner_token.results.container.Output | last }} --no-interactive'
-      ansible.builtin.command: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 register --instance http://{{ inventory_hostname }}:{{ gitea_container_port }} --token {{ gitea_runner_token.stdout_lines | last }} --no-interactive'
-      become: yes
-      become_user: "{{ username }}"
+      ansible.builtin.command: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 register --instance http://localhost:{{ gitea_container_port }} --token {{ gitea_runner_token.stdout_lines | last }} --no-interactive'
       args:
         chdir: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}'
         creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/.runner'
