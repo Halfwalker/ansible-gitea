@@ -17,6 +17,8 @@ platforms:
       # - /var/run/docker.sock:/var/run/docker.sock
       # - ${MOLECULE_PROJECT_DIRECTORY}:${MOLECULE_PROJECT_DIRECTORY}
     privileged: true
+    capabilities:
+      - SYS_ADMIN
     pre_build_image: true
     # network_mode ensures that the test instance is on the same docker network
     # as the toolset container as well as the mailhog container
