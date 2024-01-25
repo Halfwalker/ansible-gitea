@@ -10,7 +10,7 @@ steps:
   # Skip the pipeline if only changes to README.md or non-drone control files
   # Looking for all .yml files to trigger Lint and Test
   - name: Skip
-    image: quay.io/halfwalker/toolset
+    image: docker.io/halfwalker/alpineset2
     commands:
       # Grab the incoming commit info to see what changed
       - test $DRONE_BUILD_EVENT = pull_request
@@ -23,13 +23,13 @@ steps:
       - git --no-pager diff --name-only $DIFF_STRING | grep -qE '.*\/.*.yml|.drone.yml' || exit 78
 
   - name: Lint
-    image: quay.io/halfwalker/toolset
+    image: docker.io/halfwalker/alpineset2
     commands:
       - yamllint .
       - ansible-lint --force-color
 
   - name: Molecule
-    image: quay.io/halfwalker/toolset
+    image: docker.io/halfwalker/alpineset2
     environment:
       MOLECULE_DISTRO: ubuntu2204
       # Set this to name the molecule instance in molecule.yml
@@ -40,7 +40,7 @@ steps:
       # ROLE_PATH: /drone/ansible-alacritty
       # https://stackoverflow.com/questions/46366271/using-dind-on-drone-io
       # DOCKER_HOST: "unix:///drone/docker.sock"
-      DOCKER_HOST: "tcp://dind:2375"
+      # DOCKER_HOST: "tcp://dind:2375"
       GH_USER:
         from_secret: GH_USER
       GH_TOKEN:
@@ -57,26 +57,26 @@ steps:
     #   - name: dockersock
     #     path: /var/run
 
-services:
-  - name: dind
-    image: docker:dind
-    privileged: true
-    # https://discourse.drone.io/t/port-forwarding-in-drone-services/7803
-    # ports:
-    #   - port: 2375
-    #     host: 12375
-    #     protocol: TCP
-    # command: [ '-H', 'tcp:///0.0.0.0:2375' ]
-    # command: ["--tls=false"]
-    commands:
-      - dockerd --tls=false --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock -p 0.0.0.0:2375:2375/tcp
-    environment:
-      DOCKER_TLS_CERTDIR:
-    networks:
-      - name: $DRONE_DOCKER_NETWORK_ID
-    # volumes:
-    #   - name: dockersock
-    #     path: /var/run
+# services:
+#   - name: dind
+#     image: docker:dind
+#     privileged: true
+#     # https://discourse.drone.io/t/port-forwarding-in-drone-services/7803
+#     # ports:
+#     #   - port: 2375
+#     #     host: 12375
+#     #     protocol: TCP
+#     # command: [ '-H', 'tcp:///0.0.0.0:2375' ]
+#     # command: ["--tls=false"]
+#     commands:
+#       - dockerd --tls=false --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock -p 0.0.0.0:2375:2375/tcp
+#     environment:
+#       DOCKER_TLS_CERTDIR:
+#     networks:
+#       - name: $DRONE_DOCKER_NETWORK_ID
+#     # volumes:
+#     #   - name: dockersock
+#     #     path: /var/run
 
 ---
 kind: pipeline
@@ -89,7 +89,7 @@ workspace:
 steps:
   # Skip the pipeline if only changes to README.md or non-drone control files
   - name: Skip
-    image: quay.io/halfwalker/toolset
+    image: docker.io/halfwalker/alpineset2
     commands:
       # Grab the incoming commit info to see what changed
       - test $DRONE_BUILD_EVENT = pull_request
@@ -102,13 +102,13 @@ steps:
       - git --no-pager diff --name-only $DIFF_STRING | grep -qE '.*\/.*.yml|.drone.yml' || exit 78
 
   - name: Lint
-    image: quay.io/halfwalker/toolset
+    image: docker.io/halfwalker/alpineset2
     commands:
       - yamllint .
       - ansible-lint --force-color
 
   - name: Molecule
-    image: quay.io/halfwalker/toolset
+    image: docker.io/halfwalker/alpineset2
     environment:
       MOLECULE_DISTRO: ubuntu2004
       # Set this to name the molecule instance in molecule.yml
@@ -119,7 +119,7 @@ steps:
       # ROLE_PATH: /drone/ansible-alacritty
       # https://stackoverflow.com/questions/46366271/using-dind-on-drone-io
       # DOCKER_HOST: "unix:///drone/docker.sock"
-      DOCKER_HOST: "tcp://dind:2375"
+      # DOCKER_HOST: "tcp://dind:2375"
       GH_USER:
         from_secret: GH_USER
       GH_TOKEN:
@@ -136,26 +136,26 @@ steps:
     #   - name: dockersock
     #     path: /var/run
 
-services:
-  - name: dind
-    image: docker:dind
-    privileged: true
-    # https://discourse.drone.io/t/port-forwarding-in-drone-services/7803
-    # ports:
-    #   - port: 2375
-    #     host: 12375
-    #     protocol: TCP
-    # command: [ '-H', 'tcp:///0.0.0.0:2375' ]
-    # command: ["--tls=false"]
-    commands:
-      - dockerd --tls=false --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock -p 0.0.0.0:2375:2375/tcp
-    environment:
-      DOCKER_TLS_CERTDIR:
-    networks:
-      - name: $DRONE_DOCKER_NETWORK_ID
-    # volumes:
-    #   - name: dockersock
-    #     path: /var/run
+# services:
+#   - name: dind
+#     image: docker:dind
+#     privileged: true
+#     # https://discourse.drone.io/t/port-forwarding-in-drone-services/7803
+#     # ports:
+#     #   - port: 2375
+#     #     host: 12375
+#     #     protocol: TCP
+#     # command: [ '-H', 'tcp:///0.0.0.0:2375' ]
+#     # command: ["--tls=false"]
+#     commands:
+#       - dockerd --tls=false --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock -p 0.0.0.0:2375:2375/tcp
+#     environment:
+#       DOCKER_TLS_CERTDIR:
+#     networks:
+#       - name: $DRONE_DOCKER_NETWORK_ID
+#     # volumes:
+#     #   - name: dockersock
+#     #     path: /var/run
 
 # volumes:
 #   - name: dockersock

@@ -38,7 +38,7 @@
 
     - name: Debug
       debug:
-        var=goss_version
+        var: goss_version
 
     # Can do some magic here to handle multiple architectures
     - name: Get checksum for amd64
@@ -54,7 +54,7 @@
         checksum: "sha256:{{ goss_sha256sum }}"
         mode: 0755
 
-    - name: Create Molecule directory for test files  # noqa 208
+    - name: Create Molecule directory for test files  # noqa risky-file-permissions
       file:
         path: "{{ goss_test_directory }}"
         state: directory
@@ -106,7 +106,7 @@
         jmesquery: "[*].{name: invocation.module_args.name, ip: container.NetworkSettings.IPAddress}"
 
     - debug:
-        var=container_ip_addresses
+        var: container_ip_addresses
       # ok: [instance-ubuntu2204] => {
       #     "container_ip_addresses": [
       #         {
@@ -153,7 +153,7 @@
         - drone-runner
 
     - debug:
-        var=container_fact
+        var: container_fact
 
     #
     # Have to remove the dash (-) from the drone-runner name because goss
@@ -175,9 +175,9 @@
         - drone-runner
 
     - debug:
-        var=container_dict
+        var: container_dict
 
-    - name: Copy Goss tests to remote  # noqa 208
+    - name: Copy Goss tests to remote  # noqa risky-file-permissions
       copy:
         src: "{{ item.path }}"
         dest: "{{ goss_test_directory }}/{{ item.path | basename }}"
@@ -185,11 +185,11 @@
         - "{{ test_files.files }}"
 
     - name: Register test files
-      shell: "ls {{ goss_test_directory }}/test_*.yml"  # noqa 301
+      shell: "ls {{ goss_test_directory }}/test_*.yml"  # noqa no-changed-when
       register: test_files
 
     - name: Execute Goss tests
-      # command: "{{ goss_bin }} -g {{ item }} validate --format {{ goss_format }}"  # noqa 301
+      # command: "{{ goss_bin }} -g {{ item }} validate --format {{ goss_format }}"  # noqa no-changed-when
       # --vars-inline '{ container_suffix: {{ ansible_distribution_release }} }'
       command:
         "{{ goss_bin }}

@@ -41,7 +41,7 @@
 - name: Check if ZFS installed
   stat:
     path: /sbin/zpool
-  register: ZFS_installed
+  register: zfs_installed
   check_mode: no
 
 - name: Validate that docker is installed

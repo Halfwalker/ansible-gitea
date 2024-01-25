@@ -19,7 +19,7 @@ TimeoutStartSec=infinity
 {% if not lookup('env', 'MOLECULE_SCENARIO_NAME') %}
 {% if item.volumes is defined %}{% for vol in item.volumes %}
 {# Only need to check for mountpoint if using ZFS. Opinionated ... #}
-{% if not ZFS_installed.stat.exists %}# {% endif %}ExecStartPre=/bin/mountpoint {{ vol.host }}
+{% if not zfs_installed.stat.exists %}# {% endif %}ExecStartPre=/bin/mountpoint {{ vol.host }}
 {% endfor %}{% endif %}
 {% endif %}
 ExecStartPre=-/usr/bin/docker kill gitea

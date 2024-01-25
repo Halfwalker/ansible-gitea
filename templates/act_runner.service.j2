@@ -8,7 +8,7 @@ Type=simple
 WorkingDirectory={% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
 
 {# Only need to check for mountpoint if using ZFS. Opinionated ... #}
-{% if not ZFS_installed.stat.exists %}# {% endif %}ExecStartPre=/bin/mountpoint {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
+{% if not zfs_installed.stat.exists %}# {% endif %}ExecStartPre=/bin/mountpoint {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}{% endif %}{% endfor %}
 
 ExecStartPre=/usr/bin/test -f {% for dataset in gitea_datasets %}{% if dataset.name == 'gitea' %}{{ dataset.mountpoint }}/.runner{% endif %}{% endfor %}
 

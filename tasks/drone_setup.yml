@@ -93,7 +93,7 @@
   changed_when: false
 
 - debug:
-    var=gitea_users
+    var: gitea_users
 
 ##########################################################################
 #
@@ -116,7 +116,7 @@
       until: gitea_create_admin.rc == 0
 
     - debug:
-        var=gitea_create_admin
+        var: gitea_create_admin
 
     #
     # NOTE: As of 1.19, by default access tokens are created with NO scope, so have no power.
@@ -141,7 +141,7 @@
       until: gitea_create_token.rc == 0
 
     # - debug:
-    #     var=gitea_create_token
+    #     var: gitea_create_token
 
       # Access token was successfully created: f383294c67240e260d4b89768c744bad36b50409
     - name: new user - Extract token from new access token above for {{ gitea_drone_admin }}
@@ -169,7 +169,7 @@
     #   {"id":3,"name":"Drone","client_id":"118222af-ecc5-4819-ba79-8093d0cfe419","client_secret":"yiN9LmNjl-ZWGCO2ALKxjtHbLwJeXLfoSjwjLlDslYI=","redirect_uris":["http://test2.local:3080/login"],"created":"2021-02-16T14:41:53-05:00"}
 
     # - debug:
-    #     var=gitea_create_oauth2
+    #     var: gitea_create_oauth2
 
     # Returns an array with one item, so use | first filter to get just string
     - name: new user - Capture new client_id and client_secret
@@ -222,7 +222,7 @@
             gitea_client_secret: "{{ lookup('ini', 'DRONE_GITEA_CLIENT_SECRET type=properties file=/tmp/admin.tokens') }}"
 
         # - debug:
-        #   msg="token {{ gitea_admin_token }} id {{ gitea_client_id }} len={{ gitea_client_id | length }} secret {{ gitea_client_secret }}"
+        #   msg: "token {{ gitea_admin_token }} id {{ gitea_client_id }} len={{ gitea_client_id | length }} secret {{ gitea_client_secret }}"
       #
       # block
 
@@ -261,10 +261,12 @@
           accept: 'application/json'
       register: gitea_get_oauth2
 
-    - debug: msg="oath2 entries - {{ gitea_get_oauth2.json | length }}"
     - debug:
-        var=gitea_get_oauth2
-    - debug: msg="{{ gitea_get_oauth2.json | json_query(jmesquery) }}"
+        msg: "oath2 entries - {{ gitea_get_oauth2.json | length }}"
+    - debug:
+        var: gitea_get_oauth2
+    - debug:
+        msg: "{{ gitea_get_oauth2.json | json_query(jmesquery) }}"
       vars:
         jmesquery: "[*].{ID: id, Name: name, Client_ID: client_id, Client_Secret: client_secret, Redirect_URIs: redirect_uris}"
 
@@ -279,7 +281,7 @@
           with_items: "{{ gitea_get_oauth2.json | json_query('[? name==`Drone`]') }}"
 
         - debug:
-            msg="gitea_oauth2_drone is {{ gitea_oauth2_drone }} len {{ gitea_oauth2_drone | length }}"
+            msg: "gitea_oauth2_drone is {{ gitea_oauth2_drone }} len {{ gitea_oauth2_drone | length }}"
           when: gitea_oauth2_drone is defined
 
         - name: drone - Ensure that there are NO oauth2 entries named Drone
