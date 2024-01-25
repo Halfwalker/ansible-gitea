@@ -83,12 +83,12 @@
 
 # Set gitea container name if we're running under molecule
 # eg. gitea-ubuntu-jammy under molecule, or gitea for normal use
-# MOLECULE_SCENARIO_NAME is set in molecule/default/molecule.yml
+# MOLECULE_DISTRO is set in molecule/default/molecule.yml
 # The existence of that tells us we're under molecule
 # Needs to be changed_when: false because it always changes, so will fail idepmotence
 # Get list of users, see if main user is in list
 - name: Fetch list of current (if any) users in gitea
-  command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user list --admin
+  command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_DISTRO') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user list --admin
   register: gitea_users
   changed_when: false
 
@@ -108,7 +108,7 @@
     # Gitea may still be initializing, resulting in "createUser: database is locked"
     # This will try 5 times with 10 secs between attempts
     - name: new user - Create Drone admin user in gitea
-      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user create --username {{ gitea_drone_admin }} --password {{ gitea_drone_pass }} --email {{ default_mail_target }} --admin --must-change-password=false --access-token
+      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_DISTRO') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user create --username {{ gitea_drone_admin }} --password {{ gitea_drone_pass }} --email {{ default_mail_target }} --admin --must-change-password=false --access-token
       register: gitea_create_admin
       changed_when: false
       retries: 5
@@ -133,7 +133,7 @@
 
     # scopes WAS repo,admin:repo_hook,notification,user,admin:application
     - name: new_user - Create scoped access token for Drone admin
-      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user generate-access-token --username {{ gitea_drone_admin }} --token-name oauth2-application --scopes {{ gitea_drone_scopes }}
+      command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_DISTRO') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea admin user generate-access-token --username {{ gitea_drone_admin }} --token-name oauth2-application --scopes {{ gitea_drone_scopes }}
       register: gitea_create_token
       changed_when: false
       retries: 5
@@ -151,7 +151,7 @@
 
     - name: new user - Create droneadmin oauth2 application for Drone
       uri:
-        url: "http://{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}:{{ gitea_container_port }}/api/v1/user/applications/oauth2?token={{ gitea_admin_token }}"
+        url: "http://{% if lookup('env', 'MOLECULE_DISTRO') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}:{{ gitea_container_port }}/api/v1/user/applications/oauth2?token={{ gitea_admin_token }}"
         method: POST
         return_content: true
         body_format: json
@@ -251,7 +251,7 @@
     # curl -X GET "http://test2.local:3000/api/v1/user/applications/oauth2?token=4b3824f3524cf105473c9c57b7756c1c2cbffcb7" -H  "accept: application/json"
     - name: drone - Fetch list of oauth2 applications for {{ gitea_drone_admin }}
       uri:
-        url: "http://{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}:{{ gitea_container_port }}/api/v1/user/applications/oauth2?token={{ gitea_admin_token }}"
+        url: "http://{% if lookup('env', 'MOLECULE_DISTRO') %}{{ gitea_container_info.container.NetworkSettings.IPAddress }}{% else %}{{ inventory_hostname }}{% endif %}:{{ gitea_container_port }}/api/v1/user/applications/oauth2?token={{ gitea_admin_token }}"
         method: GET
         return_content: true
         status_code: 200
