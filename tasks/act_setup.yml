@@ -70,7 +70,7 @@
     # Needs to be changed_when: false because it always changes, so will fail idepmotence
     # https://github.com/go-gitea/gitea/pull/23762
     - name: act - Fetch runner token from Gitea container
-      ansible.builtin.command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea actions generate-runner-token
+      ansible.builtin.command: docker exec -u git gitea{% if lookup('env', 'MOLECULE_DISTRO') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} /app/gitea/gitea --config /data/gitea/conf/app.ini actions generate-runner-token
       register: gitea_runner_token
       changed_when: false
     
