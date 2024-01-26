@@ -7,9 +7,12 @@ on:
   push:
     paths_ignore:
       - '**.md'
-  schedule:
-    # Every 1st of the month at 10pm
-    - cron: '0 22 1 * *'
+  # Schedules not supported yet
+  # https://docs.gitea.com/usage/actions/faq#what-workflow-trigger-events-does-gitea-support
+  # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+  # schedule:
+  #   # Every 1st of the month at 10pm
+  #   - cron: '0 22 1 * *'
 
 
 jobs:
