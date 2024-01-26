@@ -5,7 +5,7 @@ run-name: Molecule test
 
 on:
   push:
-    paths_ignore:
+    paths-ignore:
       - '**.md'
   # Schedules not supported yet
   # https://docs.gitea.com/usage/actions/faq#what-workflow-trigger-events-does-gitea-support
