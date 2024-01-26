@@ -26,7 +26,9 @@ jobs:
     container:
       image: docker.io/halfwalker/alpineset2
       # This option for using v0.2.6 ACT runner
-      privileged: true
+      # Not required ? Looks like "options: --privileged" below works, and
+      # doesn't break github syntax
+      # privileged: true
       # This option for using old -main- ACT runner
       options: --privileged
     env:
