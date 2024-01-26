@@ -48,11 +48,11 @@
   ansible.builtin.shell: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64 generate-config > {% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
   args:
     chdir: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}'
-    creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
+    creates: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}_config.yml'
 
 - name: act - Set container default to allow privileged
   replace:
-    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_{{ gitea_act_version }}_config.yml'
+    dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}_config.yml'
     regexp: 'privileged: false'
     replace: 'privileged: true'
 

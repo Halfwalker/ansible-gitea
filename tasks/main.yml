@@ -67,6 +67,9 @@
       when: force_update
       with_items:
         - '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{{ gitea_drone_env_file }}{% endif %}{% endfor %}'
+        - '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64'
+        - '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}.runner'
+        - '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}_config.yml'
 
   #------------------------------------------------------------------------------
     - name: setup - Set up gitea container and get it running
