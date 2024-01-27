@@ -63,6 +63,14 @@ Available variables are listed below along with default values (see `defaults/ma
 
     **TODO:** Move to a container for the act_runner like gitea, drone and drone-runner.
 
+* `gitea_act_version: 0.2.6`
+
+    Which version of the Gitea ACT runner to install
+
+* `gitea_act_capacity: 10`
+
+    How many concurrent jobs this ACT runner instance can handle
+
 * `gitea_container_port: 3000`
 `gitea_drone_port: 3001`
 `gitea_dronerunner_port: 3002`

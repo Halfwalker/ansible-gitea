@@ -13,6 +13,8 @@ enable_drone: true
 enable_act: true
 # What version to install
 gitea_act_version: 0.2.6
+# act runner container capacity - how many concurrent jobs
+gitea_act_capacity: 10
 
 # Docker network name for gitea/drone/drone-runner to live in
 gitea_network_name: ci-cd

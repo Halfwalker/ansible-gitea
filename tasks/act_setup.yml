@@ -53,8 +53,12 @@
 - name: act - Set container default to allow privileged
   replace:
     dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}_config.yml'
-    regexp: 'privileged: false'
-    replace: 'privileged: true'
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: 'privileged: false', replace: 'privileged: true' }
+    - { regexp: 'dir: ""', replace: 'dir: "{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_cache"' }
+    - { regexp: 'capacity: .*', replace: 'capacity: {{ gitea_act_capacity }}' }
 
 - name: act - check for existence of .runner config
   stat:
