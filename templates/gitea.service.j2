@@ -37,7 +37,7 @@ ExecStartPre=/usr/bin/docker pull gitea/gitea:latest
     container.
 #}
 ExecStart=/usr/bin/docker run --rm --name gitea{% if lookup('env', 'MOLECULE_SCENARIO_NAME') %}-ubuntu-{{ ansible_distribution_release }}{% endif %} \
-    -e TZ=America/New_York \
+    -e TZ={{ timezone }}\
     -e USER_UID={{ getent_passwd['git'][1] }} \
     -e USER_GID={{ getent_passwd['git'][2] }} \
     -p {{ gitea_container_port }}:3000 \

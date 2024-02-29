@@ -9,6 +9,9 @@ force_update: false
 # Shall we install drone and drone-runner as well ?
 enable_drone: true
 
+# Default timezone - mainly for systemd service files
+timezone: 'America/Denver'
+
 # Shall we install the act runner and enable it ?
 enable_act: true
 # What version to install
