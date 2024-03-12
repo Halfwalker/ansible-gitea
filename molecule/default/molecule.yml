@@ -16,6 +16,7 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       # - /var/run/docker.sock:/var/run/docker.sock
       # - ${MOLECULE_PROJECT_DIRECTORY}:${MOLECULE_PROJECT_DIRECTORY}
+    rootless: false
     privileged: true
     capabilities:
       - SYS_ADMIN
