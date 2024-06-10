@@ -28,7 +28,7 @@
         password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
         force_basic_auth: "{% if lookup('env', 'GH_USER') %}yes{% else %}no{% endif %}"
       register: _latest_release
-      until: _latest_release.status == 200
+      until: ('status' in _latest_release and  _latest_release.status == 200)
       retries: 5
 
     - name: "Set goss_version to {{ _latest_release.json.tag_name[1:] }}"
