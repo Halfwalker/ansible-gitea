@@ -41,6 +41,7 @@ gitea_support_packages:
   common:
     - git
     - util-linux
+  noble: []
   jammy: []
   focal: []
   bionic: []
