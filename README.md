@@ -71,14 +71,17 @@ Available variables are listed below along with default values (see `defaults/ma
 
     How many concurrent jobs this ACT runner instance can handle
 
-* `gitea_container_port: 3000`
-`gitea_drone_port: 3001`
-`gitea_dronerunner_port: 3002`
+* Container ports
+    * `gitea_container_port: 3000`
+    * `gitea_drone_port: 3001`
+    * `gitea_dronerunner_port: 3002`
 
     Defines what port each container will listen on
 
-* `gitea_drone_internal_port: 80`
-`gitea_dronerunner_internal_port: 3000`
+* Drone and drone-runner internal ports
+
+    * `gitea_drone_internal_port: 80`
+    * `gitea_dronerunner_internal_port: 3000`
 
     These are the ports that drone and drone-runner listen on internally - ~~these vars are used by the molecule testing _molecule/default/tests/test_default.yml_ goss file to verify that the containers are running.~~  No longer using **goss** for verification tests - seems to be abandoned.  Now minimal testing via testinfra is in place.
 
@@ -86,8 +89,10 @@ Available variables are listed below along with default values (see `defaults/ma
 
     Used for file ownership and first admin user in Gitea (see `gitea_drone_admin` below)  Will be pulled from vault if available.
 
-* `gitea_drone_admin: droneadmin`
-`gitea_drone_pass: <some password>`
+* Drone admin user/password
+
+    * `gitea_drone_admin: droneadmin`
+    * `gitea_drone_pass: <some password>`
 
     When Gitea is installed a primary admin user is created with this name.  This is needed in order to generate the oauth2 `client_id` and `client_secret` variables that drone needs to access Gitea.
 
