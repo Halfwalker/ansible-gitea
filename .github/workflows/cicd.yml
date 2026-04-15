@@ -30,7 +30,7 @@ jobs:
       # doesn't break github syntax
       # privileged: true
       # This option for using old -main- ACT runner
-    options: --privileged --network bridge
+      options: --privileged --network bridge
     env:
       # Set DRONE_REPO_NAME to be used in molecule.yml
       # That way the container name is consistent between github/gitea and Drone
