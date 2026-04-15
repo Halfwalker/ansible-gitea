@@ -7,12 +7,11 @@ on:
   push:
     paths-ignore:
       - '**.md'
-  # Schedules not supported yet
   # https://docs.gitea.com/usage/actions/faq#what-workflow-trigger-events-does-gitea-support
   # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
-  # schedule:
-  #   # Every 1st of the month at 10pm
-  #   - cron: '0 22 1 * *'
+  schedule:
+    # Every 1st of the month at 10pm
+    - cron: '0 22 1 * *'
 
 
 jobs:
@@ -21,6 +20,7 @@ jobs:
     strategy:
       matrix:
         version:
+          - "2404"
           - "2204"
           - "2004"
     container:
@@ -30,7 +30,7 @@ jobs:
       # doesn't break github syntax
       # privileged: true
       # This option for using old -main- ACT runner
-      options: --privileged
+    options: --privileged --network bridge
     env:
       # Set DRONE_REPO_NAME to be used in molecule.yml
       # That way the container name is consistent between github/gitea and Drone
