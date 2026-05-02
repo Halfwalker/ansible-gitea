@@ -31,7 +31,9 @@
   block:
     - name: act - Fetch Gitea ACT runner
       get_url:
-        url: "https://dl.gitea.com/act_runner/{{ gitea_act_version }}/act_runner-{{ gitea_act_version }}-linux-amd64.xz"
+        # Old path was url: "https://dl.gitea.com/act_runner/{{ gitea_act_version }}/act_runner-{{ gitea_act_version }}-linux-amd64.xz"
+        # https://gitea.com/gitea/runner/releases/download/v0.6.1/act_runner-0.6.1-linux-amd64.xz
+        url: "https://gitea.com/gitea/runner/releases/download/v{{ gitea_act_version }}/act_runner-{{ gitea_act_version }}-linux-amd64.xz"
         dest: '{% for dataset in gitea_datasets %}{% if dataset.name == "gitea" %}{{ dataset.mountpoint }}{% endif %}{% endfor %}/act_runner-{{ gitea_act_version }}-linux-amd64.xz'
         owner: "{{ username }}"
         group: "{{ groupname }}"

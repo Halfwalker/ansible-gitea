@@ -15,7 +15,7 @@ timezone: 'America/Denver'
 # Shall we install the act runner and enable it ?
 enable_act: true
 # What version to install
-gitea_act_version: 0.2.6
+gitea_act_version: 0.6.1
 # act runner container capacity - how many concurrent jobs
 gitea_act_capacity: 10
 
